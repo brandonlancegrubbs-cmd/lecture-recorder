@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture Recorder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<style>
+:root{
+  --paper:#EEF0E9;--surface:#FAFBF6;--sunken:#E4E7DD;
+  --ink:#1A1F19;--muted:#5E6A5C;--rule:#D3D8CB;--rule-hard:#AEB6A7;
+  --accent:#1E6B52;--accent-soft:#DCEAE2;
+  --alert:#9E4426;--alert-soft:#F4E3DC;
+  --gold:#8A6410;--gold-soft:#F6EDD6;
+  --on-accent:#FAFBF6;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#131610;--surface:#1C211A;--sunken:#171C15;--ink:#E8EBE2;
+  --muted:#97A18F;--rule:#2F362C;--rule-hard:#454E42;
+  --accent:#63C098;--accent-soft:#172C23;--alert:#E0876B;--alert-soft:#2E1B14;
+  --gold:#D7AB55;--gold-soft:#2B2313;--on-accent:#10150F;
+}}
+:root[data-theme="dark"]{
+  --paper:#131610;--surface:#1C211A;--sunken:#171C15;--ink:#E8EBE2;
+  --muted:#97A18F;--rule:#2F362C;--rule-hard:#454E42;
+  --accent:#63C098;--accent-soft:#172C23;--alert:#E0876B;--alert-soft:#2E1B14;
+  --gold:#D7AB55;--gold-soft:#2B2313;--on-accent:#10150F;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:16.5px;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:clamp(30px,6vw,42px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:24px;font-weight:700}
+h3{font-size:17px;font-weight:700}
+p{margin:0}
+.mono,.kicker,label,.chip,button,select,input,kbd,.pill{font-family:var(--mono)}
+.kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.sub{color:var(--muted);max-width:62ch;margin-top:8px}
+header.top{display:flex;flex-direction:column;gap:6px;padding-bottom:18px;border-bottom:1px solid var(--rule-hard)}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:2px;padding:20px}
+button{font-size:13px;border-radius:2px;border:1px solid var(--rule-hard);background:var(--surface);color:var(--ink);padding:8px 12px;cursor:pointer;line-height:1.2}
+button:hover:not(:disabled){border-color:var(--ink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+button.danger{border-color:var(--alert);color:var(--alert)}
+button.danger.armed{background:var(--alert);color:var(--surface)}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding-inline:4px}
+button.ghost:hover:not(:disabled){color:var(--ink);border-color:transparent}
+select,input[type=text],input[type=date],textarea{font-size:14px;width:100%;padding:9px 10px;border:1px solid var(--rule-hard);border-radius:2px;background:var(--paper);color:var(--ink)}
+textarea{font-family:var(--serif);font-size:15px;line-height:1.5;min-height:180px;resize:vertical}
+label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+kbd{font-size:10px;border:1px solid var(--rule-hard);border-bottom-width:2px;border-radius:2px;padding:0 4px;margin-left:6px;color:var(--muted)}
+
+/* recorder */
+.rec{display:flex;flex-direction:column;gap:18px}
+.setup{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:14px}
+.addcourse{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr) auto auto;gap:8px;align-items:end}
+.deck{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:18px;align-items:center;padding:14px 0;border-block:1px solid var(--rule)}
+.recbtn{width:76px;height:76px;border-radius:50%;border:2px solid var(--ink);background:var(--surface);display:grid;place-items:center;padding:0}
+.recbtn .dot{width:30px;height:30px;border-radius:50%;background:var(--alert);transition:border-radius .2s,width .2s,height .2s}
+.recbtn.on .dot{width:26px;height:26px;border-radius:3px}
+.recbtn.on{border-color:var(--alert)}
+.clock{min-width:150px}
+#timer{font-family:var(--display);font-weight:800;font-size:44px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+#recState{font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:.04em}
+#recState.live{color:var(--alert)}
+#wave{width:100%;height:64px;display:block;background:var(--sunken);border-radius:2px}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+.controls .danger{margin-left:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11.5px;padding:3px 8px;border-radius:2px;background:var(--sunken);color:var(--muted);border:1px solid transparent}
+.chip.ok{background:var(--accent-soft);color:var(--accent)}
+.chip.warn{background:var(--gold-soft);color:var(--gold)}
+.chip.bad{background:var(--alert-soft);color:var(--alert)}
+.live{background:var(--paper);border:1px solid var(--rule);border-radius:2px;padding:14px 16px;min-height:150px;max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.live .ln{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px}
+.live .t{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:3px;font-variant-numeric:tabular-nums}
+.live .interim{color:var(--muted);font-style:italic}
+.empty{color:var(--muted)}
+.mark{font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:2px;justify-self:start}
+.mark.star{background:var(--gold-soft);color:var(--gold)}
+.mark.slide{background:var(--accent-soft);color:var(--accent)}
+.recfoot{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.toggle{display:flex;align-items:center;gap:6px;margin:0 0 0 auto;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--ink)}
+.msg{font-size:14.5px;padding:10px 14px;border-radius:2px;background:var(--gold-soft);color:var(--ink);border-left:3px solid var(--gold)}
+.msg.bad{background:var(--alert-soft);border-left-color:var(--alert)}
+.msg.ok{background:var(--accent-soft);border-left-color:var(--accent)}
+.banner{font-size:14.5px;padding:10px 14px;background:var(--alert-soft);border-left:3px solid var(--alert)}
+
+/* paste */
+.paste{display:flex;flex-direction:column;gap:14px}
+.paste .grid3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,.8fr);gap:12px}
+.hint{font-size:14px;color:var(--muted)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* library */
+.libhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px}
+.libhead .mono{font-size:12px;color:var(--muted);margin-left:auto}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters button{font-size:12px;padding:4px 9px}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.list{border-top:1px solid var(--rule-hard)}
+.row{display:grid;grid-template-columns:92px 104px minmax(0,1fr) 70px 150px;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--rule);cursor:pointer;background:transparent;width:100%;text-align:left;border-left:0;border-right:0;border-top:0;border-radius:0;font-family:var(--serif);font-size:16px}
+.row:hover{background:var(--surface)}
+.row .d,.row .dur{font-family:var(--mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.row .c{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.row .ti{overflow-wrap:anywhere}
+.pill{font-size:11.5px;padding:3px 8px;border-radius:2px;justify-self:start;white-space:nowrap}
+.p-ready{background:var(--accent-soft);color:var(--accent)}
+.p-raw{background:var(--gold-soft);color:var(--gold)}
+.p-clean{background:var(--sunken);color:var(--ink)}
+.p-rec,.p-int{background:var(--alert-soft);color:var(--alert)}
+.libempty{padding:22px 4px;color:var(--muted);border-bottom:1px solid var(--rule)}
+
+/* detail */
+.detail{display:flex;flex-direction:column;gap:16px}
+.dhead{display:flex;flex-direction:column;gap:6px}
+.meta{font-size:12.5px;color:var(--muted)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--rule-hard);overflow-x:auto}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:10px 14px;color:var(--muted);border-radius:0}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.panel{display:flex;flex-direction:column;gap:14px}
+.prog{display:flex;flex-direction:column;gap:8px}
+.bar{height:6px;background:var(--sunken);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.hl{display:flex;flex-direction:column;gap:10px}
+.hl h3{display:flex;align-items:baseline;gap:8px}
+.hl h3 .mono{font-size:12px;color:var(--muted);font-weight:400}
+.item{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--rule);border-radius:2px}
+.item .t{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:3px}
+.item b{font-weight:600}
+.item.ann{border-left:3px solid var(--gold)}
+.item.emph{border-left:3px solid var(--alert)}
+.item .said{color:var(--muted);font-size:15px}
+.tx{display:flex;flex-direction:column;gap:12px;max-width:68ch}
+.tx .mk{font-family:var(--mono);font-size:12px;color:var(--muted);border-top:1px solid var(--rule);padding-top:8px}
+.tx .mk.star{color:var(--gold)}
+.tx .mk.slide{color:var(--accent)}
+.rawlist{display:flex;flex-direction:column;gap:4px}
+.rawlist .ln{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px}
+.rawlist .t{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:3px}
+.audio{display:flex;flex-direction:column;gap:8px}
+.audio .part{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;align-items:center}
+.audio audio{width:100%;height:36px}
+.audio .mono{font-size:12px;color:var(--muted)}
+.renamebox{display:flex;gap:8px}
+
+@media (max-width:640px){
+  .setup,.paste .grid3,.addcourse{grid-template-columns:minmax(0,1fr)}
+  .deck{grid-template-columns:auto minmax(0,1fr)}
+  #wave{grid-column:1/-1}
+  #timer{font-size:38px}
+  .row{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}
+  .row .d{order:1}.row .pill{order:2;justify-self:end}.row .ti{order:3;grid-column:1/-1}.row .c{order:4}.row .dur{order:5;text-align:right}
+  .audio .part{grid-template-columns:minmax(0,1fr)}
+  .toggle{margin-left:0}
+  .controls .danger{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.folderbar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;padding-block:14px}
+.kicker.muted{color:var(--muted)}
+.foldername{font-family:var(--display);font-weight:700;font-size:20px}
+.foldername.ok::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--accent);margin-right:9px;vertical-align:middle}
+.path{font-family:var(--mono);font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.row.static{cursor:default;grid-template-columns:70px 110px minmax(0,1fr)}
+.row.static:hover{background:transparent}
+.foot{text-align:center}
+.micpick{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 260px;max-width:380px}
+.micpick label{margin:0}
+.micpick select{padding:6px 8px;font-size:12.5px}
+code{font-family:var(--mono);font-size:.88em;background:var(--sunken);padding:1px 5px;border-radius:2px}
+@media (max-width:640px){.row.static{grid-template-columns:auto minmax(0,1fr)}.row.static .ti{grid-column:1/-1}}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="kicker">Fall 2026 · Lecture capture</div>
+    <h1>Lecture Recorder</h1>
+    <p class="sub">Runs in Chrome on this laptop. Records the lecture, types out what the professor says as he says it, and saves it in that class's <code>lectures</code> folder.</p>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <section class="card folderbar" aria-label="Save folder">
+    <div>
+      <div class="kicker muted">Saving to</div>
+      <div id="folderName" class="foldername">No folder chosen</div>
+    </div>
+    <button id="pickBtn" class="primary">Choose your Fall2026 folder</button>
+  </section>
+
+  <section class="card rec" aria-label="Recorder">
+    <div class="setup">
+      <div>
+        <label for="course">Class</label>
+        <select id="course"><option value="">Choose the Fall2026 folder first</option></select>
+      </div>
+      <div>
+        <label for="ltitle">Lecture</label>
+        <input id="ltitle" type="text" placeholder="e.g. Lesson 3.6 · Nucleic acids" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="deck">
+      <button id="recBtn" class="recbtn" aria-label="Start recording" disabled><span class="dot"></span></button>
+      <div class="clock">
+        <div id="timer">00:00</div>
+        <div id="recState">Choose a folder</div>
+      </div>
+      <canvas id="wave" aria-hidden="true"></canvas>
+    </div>
+
+    <div class="controls" id="liveCtl" hidden>
+      <button id="pauseBtn">Pause</button>
+      <button id="starBtn">★ Important<kbd>I</kbd></button>
+      <button id="slideBtn">Next slide<kbd>S</kbd></button>
+      <button id="stopBtn" class="danger">Stop &amp; save</button>
+    </div>
+
+    <div class="chips">
+      <span class="chip" id="chMic">Mic · off</span>
+      <span class="chip" id="chTx">Transcript · off</span>
+      <span class="chip" id="chSave">Nothing to save</span>
+      <span class="chip" id="chAudio">Audio · off</span>
+    </div>
+
+    <div class="live" id="live" aria-live="polite">
+      <p class="empty">The transcript fills in here while he talks. Before class, run <b>Check mic</b> once. Tap <b>Next slide</b> (or press S) when he changes slides so the transcript lines up with the deck.</p>
+    </div>
+
+    <div class="recfoot">
+      <div class="micpick"><label for="micSel">Mic</label><select id="micSel"><option value="">Laptop microphone</option></select></div>
+      <button id="checkBtn" class="ghost">Check mic (10 sec)</button>
+      <label class="toggle" for="keepAudio"><input type="checkbox" id="keepAudio" checked> Save the audio too</label>
+    </div>
+    <div id="micWarn" class="msg bad" hidden></div>
+    <div id="recMsg" class="msg" hidden></div>
+  </section>
+
+  <section aria-labelledby="recentHead">
+    <div class="libhead"><h2 id="recentHead">Saved lectures</h2><span class="mono" id="recentCount"></span></div>
+    <div class="list" id="recent" style="margin-top:12px"><div class="libempty">Your recordings show up here once the folder is chosen.</div></div>
+  </section>
+
+  <p class="hint foot">Keep this tab open and the laptop plugged in during class. Transcript saves every 15 seconds; audio saves in 10-minute parts.</p>
+</div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, '0');
+const fmt = s => { s = Math.max(0, Math.floor(s || 0)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}:${pad(m)}:${pad(x)}` : `${pad(m)}:${pad(x)}`; };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const words = s => (String(s).match(/\S+/g) || []).length;
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const localDate = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const SEG_SECONDS = 10 * 60;
+const SAVE_EVERY = 15000;
+
+/* ---------- folder handle (kept in IndexedDB) ---------- */
+function idb() {
+  return new Promise((res, rej) => { const r = indexedDB.open('lecture-recorder', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+}
+async function kvGet(k) { try { const d = await idb(); return await new Promise(res => { const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); } catch { return null; } }
+async function kvSet(k, v) { try { const d = await idb(); await new Promise(res => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = res; }); } catch {} }
+
+let root = null;       // Fall2026 directory handle
+let courses = [];      // subfolder names
+const fsOK = 'showDirectoryPicker' in window;
+
+/* ---------- microphone choice (skip Stereo Mix, which records the laptop's own sound) ---------- */
+const LOOPBACK = /stereo mix|what u hear|wave out|loopback|cable output|virtual/i;
+let mics = [];
+async function loadMics() {
+  try {
+    const all = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+    if (!all.some(d => d.label)) return; // labels appear once mic permission is granted
+    mics = all.filter(d => d.deviceId !== 'default' && d.deviceId !== 'communications');
+    const saved = store.get('rec-mic');
+    let pick = mics.find(d => d.deviceId === saved && !LOOPBACK.test(d.label))
+      || mics.find(d => !LOOPBACK.test(d.label) && /micro|mic\b|array|headset/i.test(d.label))
+      || mics.find(d => !LOOPBACK.test(d.label)) || mics[0];
+    $('#micSel').innerHTML = mics.map(d => `<option value="${esc(d.deviceId)}">${esc(d.label || 'Microphone')}${LOOPBACK.test(d.label) ? ' (laptop sound, not the room)' : ''}</option>`).join('');
+    if (pick) $('#micSel').value = pick.deviceId;
+    const def = all.find(d => d.deviceId === 'default');
+    micWarning(def);
+  } catch {}
+}
+function micWarning(def) {
+  const sel = mics.find(d => d.deviceId === $('#micSel').value);
+  const w = $('#micWarn');
+  if (sel && LOOPBACK.test(sel.label)) { w.innerHTML = '<b>Stereo Mix records the laptop\'s own sound, not the room.</b> Pick the Microphone Array in the Mic menu.'; w.hidden = false; return; }
+  if (def && LOOPBACK.test(def.label)) { w.innerHTML = 'Audio will record from the mic you picked, but the <b>live transcript listens to Chrome\'s default mic, which is Stereo Mix</b>. Fix once: click the site icon left of the address bar › Site settings › Microphone › choose <b>Microphone Array</b>. (Or Windows Settings › System › Sound › Input.)'; w.hidden = false; return; }
+  w.hidden = true;
+}
+function micConstraints(extra) {
+  const id = $('#micSel').value;
+  return { audio: { ...(id ? { deviceId: { exact: id } } : {}), ...extra } };
+}
+
+async function listDirs(dir) { const out = []; for await (const [name, h] of dir.entries()) if (h.kind === 'directory' && !name.startsWith('.') && !name.startsWith('_')) out.push(name); return out.sort(); }
+async function useRoot(handle) {
+  let dirs = await listDirs(handle);
+  // picked UIW instead of Fall2026? step into it
+  if (!dirs.some(d => /^(BIOL|MATH|NET|SPAN|COMP|CIS|ENGL)/i.test(d)) && dirs.includes('Fall2026')) { handle = await handle.getDirectoryHandle('Fall2026'); dirs = await listDirs(handle); }
+  root = handle; courses = dirs;
+  await kvSet('root', handle);
+  $('#folderName').textContent = handle.name; $('#folderName').classList.add('ok');
+  $('#pickBtn').textContent = 'Change folder'; $('#pickBtn').classList.remove('primary');
+  $('#banner').hidden = true;
+  renderCourses(); refreshRecent();
+  $('#recBtn').disabled = false; $('#recState').textContent = 'Ready';
+}
+async function pickFolder() {
+  if (!fsOK) return;
+  try { const h = await window.showDirectoryPicker({ id: 'uiw-fall2026', mode: 'readwrite', startIn: 'desktop' }); await useRoot(h); }
+  catch (e) { if (e?.name !== 'AbortError') recMsg('Couldn\'t open that folder. Pick <b>Desktop › UIW › Fall2026</b>.', 'bad'); }
+}
+async function reconnect(h) {
+  try { if ((await h.requestPermission({ mode: 'readwrite' })) === 'granted') await useRoot(h); } catch { await pickFolder(); }
+}
+function renderCourses() {
+  const keep = $('#course').value || store.get('rec-course') || '';
+  $('#course').innerHTML = '<option value="">Choose a class</option>' + courses.map(c => `<option value="${esc(c)}">${esc(c.replace(/-/g, ' '))}</option>`).join('');
+  if (courses.includes(keep)) $('#course').value = keep;
+}
+
+async function writeFile(dir, name, data) {
+  const fh = await dir.getFileHandle(name, { create: true });
+  const w = await fh.createWritable();
+  await w.write(data); await w.close();
+}
+const safeName = s => s.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 60).replace(/[. ]+$/, '') || 'lecture';
+async function makeLectureDir(course, date, title) {
+  const cdir = await root.getDirectoryHandle(course, { create: true });
+  const ldir = await cdir.getDirectoryHandle('lectures', { create: true });
+  const base = `${date} ${safeName(title)}`; let name = base;
+  for (let n = 2; n < 50; n++) { try { await ldir.getDirectoryHandle(name); name = `${base} (${n})`; } catch { break; } }
+  return { dir: await ldir.getDirectoryHandle(name, { create: true }), path: `${course}\\lectures\\${name}` };
+}
+
+/* ---------- UI helpers ---------- */
+function chip(el, text, cls) { el.textContent = text; el.className = 'chip' + (cls ? ' ' + cls : ''); }
+function recMsg(text, cls) { const m = $('#recMsg'); if (!text) { m.hidden = true; return; } m.innerHTML = text; m.className = 'msg' + (cls ? ' ' + cls : ''); m.hidden = false; }
+function tok(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+/* ---------- waveform ---------- */
+const wave = $('#wave'); const levels = new Array(240).fill(0);
+let meter = null, checking = false;
+function sizeWave() { const r = wave.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1; wave.width = Math.max(1, Math.round(r.width * dpr)); wave.height = Math.max(1, Math.round(r.height * dpr)); drawWave(); }
+function drawWave() {
+  const ctx = wave.getContext('2d'); const w = wave.width, h = wave.height; ctx.clearRect(0, 0, w, h);
+  const n = levels.length, bw = w / n, mid = h / 2;
+  ctx.fillStyle = tok('--rule-hard'); ctx.fillRect(0, mid - 0.5, w, 1);
+  ctx.fillStyle = (R.active && !R.paused) || checking ? tok('--accent') : tok('--muted');
+  for (let i = 0; i < n; i++) { const v = levels[i]; if (v <= 0.002) continue; const bh = Math.max(1.5, Math.min(1, v * 3.2) * (h - 8)); ctx.fillRect(i * bw, mid - bh / 2, Math.max(1, bw - 1), bh); }
+}
+function startMeter(stream) {
+  try {
+    const ac = new AudioContext(); const an = ac.createAnalyser(); an.fftSize = 1024; ac.createMediaStreamSource(stream).connect(an);
+    const buf = new Float32Array(an.fftSize); let last = 0;
+    const loop = t => { meter.raf = requestAnimationFrame(loop); if (t - last < 60) return; last = t; an.getFloatTimeDomainData(buf); let sum = 0; for (const x of buf) sum += x * x; levels.shift(); levels.push(R.paused ? 0 : Math.sqrt(sum / buf.length)); drawWave(); };
+    meter = { ac, raf: requestAnimationFrame(loop) };
+  } catch { meter = null; }
+}
+function stopMeter() { if (!meter) return; cancelAnimationFrame(meter.raf); try { meter.ac.close(); } catch {} meter = null; levels.fill(0); drawWave(); }
+
+/* ---------- recording ---------- */
+const R = { active: false, paused: false, dir: null, path: '', meta: null, stream: null, mime: '', ext: 'webm',
+  activeMs: 0, since: 0, segs: [], marks: [], slide: 0, interim: '', dirty: false,
+  mr: null, segIndex: 0, sr: null, srWanted: false, srErr: null, netFails: 0, lastSave: 0, saving: false, tick: null, wake: null };
+const audioQueue = [];
+function elapsed() { return (R.activeMs + (R.active && !R.paused ? performance.now() - R.since : 0)) / 1000; }
+function micFailCopy(e) {
+  const n = e && e.name;
+  if (n === 'NotAllowedError' || n === 'SecurityError') return 'Chrome blocked the microphone. Click the icon at the left of the address bar, set <b>Microphone</b> to Allow, then reload this page.';
+  if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'No microphone found. Check that the laptop mic is on in Windows sound settings.';
+  if (n === 'NotReadableError') return 'Another app is holding the microphone (Teams, Zoom, Discord?). Close it and try again.';
+  return 'This browser can\'t record. Open this file in Google Chrome.';
+}
+function pickMime() { if (!window.MediaRecorder) return null; for (const m of ['audio/webm;codecs=opus', 'audio/webm']) if (MediaRecorder.isTypeSupported(m)) return m; return null; }
+
+async function startRecording() {
+  recMsg('');
+  if (!root) { recMsg('Choose your Fall2026 folder first.'); return; }
+  try { if ((await root.queryPermission({ mode: 'readwrite' })) !== 'granted' && (await root.requestPermission({ mode: 'readwrite' })) !== 'granted') { recMsg('Chrome needs permission to save into the folder. Click the record button again and choose Allow.', 'bad'); return; } } catch {}
+  const course = $('#course').value;
+  if (!course) { recMsg('Pick a class first.'); $('#course').focus(); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia(micConstraints({ echoCancellation: false, noiseSuppression: true, autoGainControl: true })); loadMics(); }
+  catch (e) { recMsg(micFailCopy(e), 'bad'); chip($('#chMic'), 'Mic · blocked', 'bad'); return; }
+
+  const title = $('#ltitle').value.trim() || 'Lecture';
+  const date = localDate();
+  let made;
+  try { made = await makeLectureDir(course, date, title); }
+  catch { stream.getTracks().forEach(t => t.stop()); recMsg('Couldn\'t create the lecture folder. Choose the Fall2026 folder again.', 'bad'); return; }
+
+  Object.assign(R, { active: true, paused: false, dir: made.dir, path: made.path, stream, activeMs: 0, since: performance.now(), segs: [], marks: [], slide: 0, interim: '', dirty: true, segIndex: 0, srErr: null, netFails: 0, lastSave: 0 });
+  R.meta = { version: 1, course, title, date, startedAt: new Date().toISOString(), endedAt: null, status: 'recording', durationSec: 0, words: 0, audio: [] };
+  store.set('rec-course', course);
+
+  chip($('#chMic'), 'Mic · on', 'ok'); startMeter(stream);
+  const mime = pickMime();
+  if ($('#keepAudio').checked && mime) { R.mime = mime; startSegment(); chip($('#chAudio'), 'Audio · recording', 'ok'); }
+  else { R.mr = null; chip($('#chAudio'), $('#keepAudio').checked ? 'Audio · not supported' : 'Audio · off', $('#keepAudio').checked ? 'warn' : ''); }
+  startSR();
+  try { R.wake = await navigator.wakeLock?.request('screen'); } catch { R.wake = null; }
+
+  $('#recBtn').classList.add('on'); $('#recBtn').setAttribute('aria-label', 'Stop recording');
+  $('#liveCtl').hidden = false; for (const id of ['#keepAudio', '#course', '#checkBtn', '#pickBtn', '#micSel']) $(id).disabled = true;
+  $('#recState').textContent = `Recording · ${course.replace(/-/g, ' ')}`; $('#recState').className = 'live';
+  $('#pauseBtn').textContent = 'Pause';
+  renderLive(); save();
+  R.tick = setInterval(onTick, 500);
+}
+function onTick() {
+  $('#timer').textContent = fmt(elapsed());
+  if (R.mr && !R.paused && elapsed() - R.mr._start >= SEG_SECONDS) rotateSegment();
+  if (Date.now() - R.lastSave > SAVE_EVERY && !R.saving) save();
+}
+function startSegment() {
+  const mr = new MediaRecorder(R.stream, { mimeType: R.mime, audioBitsPerSecond: 32000 });
+  const parts = []; const idx = ++R.segIndex; const dir = R.dir; const meta = R.meta;
+  mr._start = elapsed();
+  mr.ondataavailable = e => { if (e.data && e.data.size) parts.push(e.data); };
+  mr.onstop = () => {
+    const blob = new Blob(parts, { type: R.mime });
+    if (blob.size) { audioQueue.push({ blob, dir, meta, file: `audio-${pad(idx)}.webm`, start: Math.round(mr._start), end: Math.round(mr._end ?? elapsed()) }); flushAudio(); }
+  };
+  mr.start(5000); R.mr = mr;
+}
+function rotateSegment() { const old = R.mr; old._end = elapsed(); startSegment(); try { old.stop(); } catch {} }
+let flushing = false;
+async function flushAudio() {
+  if (flushing) return; flushing = true;
+  try {
+    while (audioQueue.length) {
+      const it = audioQueue[0];
+      try { await writeFile(it.dir, it.file, it.blob); } catch { chip($('#chAudio'), 'Audio · couldn\'t save a part, retrying', 'bad'); await sleep(5000); if (++it.tries > 3) audioQueue.shift(); continue; }
+      it.meta.audio.push({ file: it.file, start: it.start, end: it.end });
+      audioQueue.shift();
+      if (R.meta === it.meta) { R.dirty = true; if (R.active) chip($('#chAudio'), `Audio · ${it.meta.audio.length} part${it.meta.audio.length === 1 ? '' : 's'} saved`, 'ok'); }
+      else await writeMeta(it.dir, it.meta, null);
+    }
+  } finally { flushing = false; }
+}
+
+function startSR() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { chip($('#chTx'), 'Transcript · needs Chrome', 'bad'); return; }
+  const r = new SR(); r.continuous = true; r.interimResults = true; r.lang = 'en-US';
+  r.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const res = e.results[i]; const txt = res[0].transcript.trim(); if (!txt) continue;
+      if (res.isFinal) { R.segs.push({ t: Math.round(elapsed()), x: txt }); R.meta.words += words(txt); R.dirty = true; }
+      else interim += txt + ' ';
+    }
+    R.interim = interim.trim(); R.netFails = 0;
+    chip($('#chTx'), `Transcript · ${R.meta.words.toLocaleString()} words`, 'ok'); renderLive();
+  };
+  r.onerror = e => {
+    R.srErr = e.error;
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { R.srWanted = false; chip($('#chTx'), 'Transcript · blocked (audio still recording)', 'bad'); recMsg('Live transcript is blocked in this browser, so only audio is saving. Tell Claude — the audio can still be transcribed after class.', 'bad'); }
+    else if (e.error === 'network') chip($('#chTx'), 'Transcript · no internet, retrying', 'warn');
+    else if (e.error === 'audio-capture') chip($('#chTx'), 'Transcript · can\'t hear the mic', 'bad');
+  };
+  r.onend = () => {
+    if (!R.srWanted || R.paused || !R.active) return;
+    const delay = R.srErr === 'network' ? Math.min(15000, 1000 * 2 ** Math.min(R.netFails++, 4)) : 300; R.srErr = null;
+    setTimeout(() => { if (R.srWanted && !R.paused && R.active && R.sr === r) { try { r.start(); } catch {} } }, delay);
+  };
+  R.sr = r; R.srWanted = true;
+  try { r.start(); chip($('#chTx'), 'Transcript · listening', 'ok'); } catch { chip($('#chTx'), 'Transcript · couldn\'t start', 'bad'); }
+}
+function mergeItems(segs, marks) {
+  return [...segs.map(s => ({ t: s.t, k: 'x', x: s.x })), ...marks.map(m => ({ t: m.t, k: m.k, n: m.n }))].sort((a, b) => a.t - b.t || (a.k === 'x') - (b.k === 'x'));
+}
+function renderLive() {
+  const recent = R.segs.slice(-14); const from = recent.length ? recent[0].t : 0;
+  let html = mergeItems(recent, R.marks.filter(m => m.t >= from)).map(it => it.k === 'x'
+    ? `<div class="ln"><span class="t">${fmt(it.t)}</span><span>${esc(it.x)}</span></div>`
+    : `<div class="ln"><span class="t">${fmt(it.t)}</span><span class="mark ${it.k}">${it.k === 'star' ? '★ Important' : 'Slide ' + it.n}</span></div>`).join('');
+  if (R.interim) html += `<div class="ln"><span class="t">…</span><span class="interim">${esc(R.interim)}</span></div>`;
+  if (!html) html = '<p class="empty">Listening. Words show up a second or two after he says them.</p>';
+  const box = $('#live'); box.innerHTML = html; box.scrollTop = box.scrollHeight;
+}
+
+function transcriptMd(meta, segs, marks) {
+  const lines = [`# ${meta.course.replace(/-/g, ' ')} · ${meta.title}`, '',
+    `Date: ${meta.date} · Started ${new Date(meta.startedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · Length ${fmt(meta.durationSec)} · ${meta.words.toLocaleString()} words`,
+    `Status: ${meta.status === 'recording' ? 'still recording (or the tab closed mid-lecture)' : 'raw live transcript, not cleaned up'}`,
+    'Marks: [★ m:ss] = student tapped Important · [Slide n · m:ss] = the professor moved to slide n', ''];
+  let last = -999; let para = [];
+  const flush = () => { if (para.length) { lines.push(para.join(' '), ''); para = []; } };
+  for (const it of mergeItems(segs, marks)) {
+    if (it.k === 'star') { flush(); lines.push(`[★ ${fmt(it.t)}]`, ''); }
+    else if (it.k === 'slide') { flush(); lines.push(`[Slide ${it.n} · ${fmt(it.t)}]`, ''); last = it.t; }
+    else { if (it.t - last >= 120) { flush(); lines.push(`[${fmt(it.t)}]`, ''); last = it.t; } para.push(it.x); }
+  }
+  flush();
+  return lines.join('\n');
+}
+async function writeMeta(dir, meta, segs, marks) {
+  if (segs) { meta.segs = segs; meta.marks = marks; }
+  await writeFile(dir, 'lecture.json', JSON.stringify(meta));
+  await writeFile(dir, 'transcript.md', transcriptMd(meta, meta.segs || [], meta.marks || []));
+}
+async function save() {
+  if (!R.dir) return true;
+  R.saving = true; R.lastSave = Date.now();
+  R.meta.durationSec = Math.round(elapsed());
+  try {
+    await writeMeta(R.dir, R.meta, R.segs, R.marks);
+    R.dirty = false;
+    chip($('#chSave'), `Saved · ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' })}`, 'ok');
+    return true;
+  } catch {
+    chip($('#chSave'), 'Not saved · retrying (is the folder still there?)', 'bad');
+    return false;
+  } finally { R.saving = false; }
+}
+
+function togglePause() {
+  if (!R.active) return;
+  if (!R.paused) {
+    R.activeMs += performance.now() - R.since; R.paused = true;
+    try { R.mr?.pause(); } catch {} try { R.sr?.stop(); } catch {}
+    $('#pauseBtn').textContent = 'Resume'; $('#recState').textContent = 'Paused'; $('#recState').className = ''; chip($('#chTx'), 'Transcript · paused', 'warn');
+  } else {
+    R.since = performance.now(); R.paused = false;
+    try { R.mr?.resume(); } catch {} if (R.srWanted) { try { R.sr?.start(); } catch {} }
+    $('#pauseBtn').textContent = 'Pause'; $('#recState').textContent = `Recording · ${R.meta.course.replace(/-/g, ' ')}`; $('#recState').className = 'live'; chip($('#chTx'), 'Transcript · listening', 'ok');
+  }
+  drawWave();
+}
+function addMark(kind) {
+  if (!R.active) return;
+  const t = Math.round(elapsed());
+  if (kind === 'slide') { R.slide++; R.marks.push({ t, k: 'slide', n: R.slide }); $('#slideBtn').firstChild.textContent = `Next slide · on ${R.slide}`; }
+  else R.marks.push({ t, k: 'star' });
+  R.dirty = true; renderLive();
+}
+async function stopRecording() {
+  if (!R.active) return;
+  $('#stopBtn').disabled = true;
+  if (!R.paused) R.activeMs += performance.now() - R.since;
+  R.paused = true; R.srWanted = false;
+  try { R.sr?.stop(); } catch {}
+  await sleep(700); // let the last spoken phrase finalize
+  if (R.mr && R.mr.state !== 'inactive') { R.mr._end = R.activeMs / 1000; try { R.mr.stop(); } catch {} }
+  R.stream?.getTracks().forEach(t => t.stop()); stopMeter(); clearInterval(R.tick);
+  try { await R.wake?.release(); } catch {}
+  R.active = false;
+  R.meta.status = 'done'; R.meta.endedAt = new Date().toISOString();
+  const ok = await save();
+  const meta = R.meta, path = R.path;
+  $('#recBtn').classList.remove('on'); $('#recBtn').setAttribute('aria-label', 'Start recording');
+  $('#liveCtl').hidden = true; $('#stopBtn').disabled = false; for (const id of ['#keepAudio', '#course', '#checkBtn', '#pickBtn', '#micSel']) $(id).disabled = false;
+  $('#slideBtn').firstChild.textContent = 'Next slide';
+  $('#recState').textContent = 'Ready'; $('#recState').className = '';
+  chip($('#chMic'), 'Mic · off'); chip($('#chTx'), 'Transcript · off'); if (!R.mr) chip($('#chAudio'), 'Audio · off');
+  R.mr = null; R.sr = null; R.stream = null; R.interim = '';
+  if (ok) recMsg(`Saved <b>${esc(meta.title)}</b> · ${fmt(meta.durationSec)} · ${meta.words.toLocaleString()} words<br><span class="path">Fall2026\\${esc(path)}</span>`, 'ok');
+  else recMsg('The last save failed. Don\'t close this tab — click Change folder, pick Fall2026 again, and the next save will go through.', 'bad');
+  setTimeout(refreshRecent, 1500);
+}
+
+async function checkMic() {
+  recMsg('');
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia(micConstraints({})); await loadMics(); }
+  catch (e) { recMsg(micFailCopy(e), 'bad'); chip($('#chMic'), 'Mic · blocked', 'bad'); return; }
+  $('#checkBtn').disabled = true; $('#recBtn').disabled = true;
+  chip($('#chMic'), 'Mic · checking', 'ok'); checking = true; startMeter(stream);
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let heard = '', srError = null, r = null;
+  const box = $('#live'); box.innerHTML = '<p class="empty">Say something like “hydrogen bonds hold water molecules together.”</p>';
+  if (SR) {
+    r = new SR(); r.continuous = true; r.interimResults = true; r.lang = 'en-US';
+    r.onresult = e => { heard = Array.from(e.results).map(x => x[0].transcript).join(' '); box.innerHTML = `<div class="ln"><span class="t">test</span><span>${esc(heard)}</span></div>`; };
+    r.onerror = e => { srError = e.error; };
+    try { r.start(); } catch {}
+  }
+  for (let i = 10; i > 0; i--) { $('#recState').textContent = `Checking · ${i}s`; await sleep(1000); }
+  try { r?.stop(); } catch {}
+  await sleep(600);
+  stream.getTracks().forEach(t => t.stop()); checking = false; stopMeter();
+  $('#recState').textContent = root ? 'Ready' : 'Choose a folder'; $('#checkBtn').disabled = false; $('#recBtn').disabled = !root;
+  chip($('#chMic'), 'Mic · off');
+  if (!SR) recMsg('The mic works, but this browser has no live transcript. Open this file in Google Chrome.', 'bad');
+  else if (heard.trim()) recMsg(`Mic and transcript both work. It heard: “${esc(heard.trim())}”`, 'ok');
+  else if (srError === 'not-allowed' || srError === 'service-not-allowed') recMsg('The mic works, but Chrome won\'t run live transcript for this file. Audio will still save. Tell Claude the transcript is blocked.', 'bad');
+  else if (srError === 'network') recMsg('The mic works, but the transcript needs internet. Check the Wi-Fi.', 'bad');
+  else recMsg('The mic opened but no words came through. Talk a little louder and run the check again, or check which mic Chrome is using.');
+  box.innerHTML = '<p class="empty">The transcript fills in here while he talks.</p>';
+}
+
+async function refreshRecent() {
+  if (!root) return;
+  const rows = [];
+  for (const c of courses) {
+    try {
+      const ldir = await (await root.getDirectoryHandle(c)).getDirectoryHandle('lectures');
+      for await (const [name, h] of ldir.entries()) if (h.kind === 'directory') rows.push({ course: c, name });
+    } catch { /* no lectures yet */ }
+  }
+  rows.sort((a, b) => b.name.localeCompare(a.name));
+  $('#recentCount').textContent = rows.length ? `${rows.length} total` : '';
+  $('#recent').innerHTML = rows.length
+    ? rows.slice(0, 12).map(r => `<div class="row static"><span class="d">${esc(r.name.slice(5, 10).replace('-', '/'))}</span><span class="c">${esc(r.course.split('-').slice(0, 2).join(' '))}</span><span class="ti">${esc(r.name.slice(11) || r.name)}</span></div>`).join('')
+    : '<div class="libempty">Nothing recorded yet. Each lecture gets its own folder with transcript.md, lecture.json and the audio parts.</div>';
+}
+
+/* ---------- events ---------- */
+$('#pickBtn').addEventListener('click', async () => { const saved = await kvGet('root'); if (!root && saved) reconnect(saved); else pickFolder(); });
+$('#recBtn').addEventListener('click', () => R.active ? stopRecording() : startRecording());
+$('#stopBtn').addEventListener('click', stopRecording);
+$('#pauseBtn').addEventListener('click', togglePause);
+$('#starBtn').addEventListener('click', () => addMark('star'));
+$('#slideBtn').addEventListener('click', () => addMark('slide'));
+$('#checkBtn').addEventListener('click', checkMic);
+$('#micSel').addEventListener('change', e => { store.set('rec-mic', e.target.value); micWarning(null); loadMics(); });
+navigator.mediaDevices?.addEventListener?.('devicechange', loadMics);
+$('#course').addEventListener('change', e => { if (e.target.value) store.set('rec-course', e.target.value); });
+document.addEventListener('keydown', e => {
+  if (!R.active || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) return;
+  const k = e.key.toLowerCase();
+  if (k === 'i') { e.preventDefault(); addMark('star'); } else if (k === 's') { e.preventDefault(); addMark('slide'); }
+});
+window.addEventListener('beforeunload', e => { if (R.active) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible' && R.active && (!R.wake || R.wake.released)) { try { R.wake = await navigator.wakeLock?.request('screen'); } catch {} } });
+window.addEventListener('resize', sizeWave);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawWave);
+
+/* ---------- boot ---------- */
+sizeWave();
+loadMics();
+(async () => {
+  if (!fsOK || !navigator.mediaDevices) {
+    $('#banner').innerHTML = 'Open this file in <b>Google Chrome</b>. This browser can\'t save into your folders or record.'; $('#banner').hidden = false;
+    $('#pickBtn').disabled = true; return;
+  }
+  const saved = await kvGet('root');
+  if (saved) {
+    let perm = 'prompt'; try { perm = await saved.queryPermission({ mode: 'readwrite' }); } catch {}
+    if (perm === 'granted') { try { await useRoot(saved); return; } catch {} }
+    $('#folderName').textContent = `${saved.name} · click Reconnect`;
+    $('#pickBtn').textContent = 'Reconnect folder';
+    $('#recState').textContent = 'Reconnect the folder';
+  }
+})();
+})();
+</script>
+
+</body>
+</html>
