@@ -407,6 +407,7 @@ async function startRecording() {
   try { if ((await root.queryPermission({ mode: 'readwrite' })) !== 'granted' && (await root.requestPermission({ mode: 'readwrite' })) !== 'granted') { recMsg('Chrome needs permission to save into the folder. Click the record button again and choose Allow.', 'bad'); return; } } catch {}
   const course = $('#course').value;
   if (!course) { recMsg('Pick a class first.'); $('#course').focus(); return; }
+  if (!$('#micSel').value) await loadMics();
   let stream;
   try { stream = await navigator.mediaDevices.getUserMedia(micConstraints({ echoCancellation: false, noiseSuppression: true, autoGainControl: true })); loadMics(); }
   catch (e) { recMsg(micFailCopy(e), 'bad'); chip($('#chMic'), 'Mic · blocked', 'bad'); return; }
@@ -442,7 +443,7 @@ function onTick() {
   if (!R.silentWarned && elapsed() > 8 && (R.peak || 0) < 0.002) {
     R.silentWarned = true;
     const w = $('#micWarn'); const label = $('#micSel').selectedOptions[0]?.textContent || 'the selected mic';
-    w.innerHTML = `<b>No sound is coming in from ${esc(label)}.</b> Stop, pick <b>Microphone Array</b> in the Mic menu, and start again.`; w.hidden = false;
+    w.innerHTML = `<b>No sound is coming in from ${esc(label)}.</b> Stop, pick <b>Microphone Array</b> in the Mic menu, and start again. If it already says Microphone Array, reload this page.`; w.hidden = false;
   }
 }
 function startSegment() {
