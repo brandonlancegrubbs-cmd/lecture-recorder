@@ -301,15 +301,17 @@ async function loadMics() {
       || mics.find(d => !LOOPBACK.test(d.label)) || mics[0];
     $('#micSel').innerHTML = mics.map(d => `<option value="${esc(d.deviceId)}">${esc(d.label || 'Microphone')}${LOOPBACK.test(d.label) ? ' (laptop sound, not the room)' : ''}</option>`).join('');
     if (pick) $('#micSel').value = pick.deviceId;
-    const def = all.find(d => d.deviceId === 'default');
-    micWarning(def);
+    // Chrome's own preferred mic (what the live transcript uses) — can differ from Windows' default
+    let chromeDefault = null;
+    try { const t = await navigator.mediaDevices.getUserMedia({ audio: true }); chromeDefault = t.getAudioTracks()[0]?.label || null; t.getTracks().forEach(x => x.stop()); } catch {}
+    micWarning(chromeDefault);
   } catch {}
 }
-function micWarning(def) {
+function micWarning(chromeDefault) {
   const sel = mics.find(d => d.deviceId === $('#micSel').value);
   const w = $('#micWarn');
   if (sel && LOOPBACK.test(sel.label)) { w.innerHTML = '<b>Stereo Mix records the laptop\'s own sound, not the room.</b> Pick the Microphone Array in the Mic menu.'; w.hidden = false; return; }
-  if (def && LOOPBACK.test(def.label)) { w.innerHTML = 'Audio will record from the mic you picked, but the <b>live transcript listens to Chrome\'s default mic, which is Stereo Mix</b>. Fix once: click the site icon left of the address bar › Site settings › Microphone › choose <b>Microphone Array</b>. (Or Windows Settings › System › Sound › Input.)'; w.hidden = false; return; }
+  if (chromeDefault && LOOPBACK.test(chromeDefault)) { w.innerHTML = '<b>The live transcript will catch 0 words.</b> It always uses Chrome\'s default mic, and that is set to Stereo Mix. Fix once: open <code>chrome://settings/content/microphone</code> in a new tab, change the dropdown at the top to <b>Microphone Array</b>, then reload this page.'; w.hidden = false; return; }
   w.hidden = true;
 }
 function micConstraints(extra) {
@@ -673,7 +675,7 @@ $('#pauseBtn').addEventListener('click', togglePause);
 $('#starBtn').addEventListener('click', () => addMark('star'));
 $('#slideBtn').addEventListener('click', () => addMark('slide'));
 $('#checkBtn').addEventListener('click', checkMic);
-$('#micSel').addEventListener('change', e => { store.set('rec-mic', e.target.value); micWarning(null); loadMics(); });
+$('#micSel').addEventListener('change', e => { store.set('rec-mic', e.target.value); loadMics(); });
 navigator.mediaDevices?.addEventListener?.('devicechange', loadMics);
 $('#course').addEventListener('change', e => { if (e.target.value) store.set('rec-course', e.target.value); });
 document.addEventListener('keydown', e => {
