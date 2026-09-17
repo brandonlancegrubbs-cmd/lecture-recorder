@@ -171,14 +171,18 @@ kbd{font-size:10px;border:1px solid var(--rule-hard);border-bottom-width:2px;bor
 .foldername{font-family:var(--display);font-weight:700;font-size:20px}
 .foldername.ok::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--accent);margin-right:9px;vertical-align:middle}
 .path{font-family:var(--mono);font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
-.row.static{cursor:default;grid-template-columns:70px 110px minmax(0,1fr)}
+.row.static{cursor:default;grid-template-columns:62px 96px minmax(0,1fr) 62px 90px auto}
+.row.static .wc{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.row.static .wc.zero{color:var(--alert)}
+.row.static .del{font-size:12px;padding:4px 6px}
+.row.static .del.armed{color:var(--alert)}
 .row.static:hover{background:transparent}
 .foot{text-align:center}
 .micpick{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 260px;max-width:380px}
 .micpick label{margin:0}
 .micpick select{padding:6px 8px;font-size:12.5px}
 code{font-family:var(--mono);font-size:.88em;background:var(--sunken);padding:1px 5px;border-radius:2px}
-@media (max-width:640px){.row.static{grid-template-columns:auto minmax(0,1fr)}.row.static .ti{grid-column:1/-1}}
+@media (max-width:640px){.row.static{grid-template-columns:auto auto minmax(0,1fr) auto}.row.static .ti{grid-column:1/-1;order:-1}}
 </style>
 <style>body{margin:0}</style>
 </head>
@@ -374,7 +378,7 @@ function startMeter(stream) {
   try {
     const ac = new AudioContext(); const an = ac.createAnalyser(); an.fftSize = 1024; ac.createMediaStreamSource(stream).connect(an);
     const buf = new Float32Array(an.fftSize); let last = 0;
-    const loop = t => { meter.raf = requestAnimationFrame(loop); if (t - last < 60) return; last = t; an.getFloatTimeDomainData(buf); let sum = 0; for (const x of buf) sum += x * x; levels.shift(); levels.push(R.paused ? 0 : Math.sqrt(sum / buf.length)); drawWave(); };
+    const loop = t => { meter.raf = requestAnimationFrame(loop); if (t - last < 60) return; last = t; an.getFloatTimeDomainData(buf); let sum = 0; for (const x of buf) sum += x * x; const lvl = Math.sqrt(sum / buf.length); if (!R.paused) R.peak = Math.max(R.peak || 0, lvl); levels.shift(); levels.push(R.paused ? 0 : lvl); drawWave(); };
     meter = { ac, raf: requestAnimationFrame(loop) };
   } catch { meter = null; }
 }
@@ -405,13 +409,13 @@ async function startRecording() {
   try { stream = await navigator.mediaDevices.getUserMedia(micConstraints({ echoCancellation: false, noiseSuppression: true, autoGainControl: true })); loadMics(); }
   catch (e) { recMsg(micFailCopy(e), 'bad'); chip($('#chMic'), 'Mic · blocked', 'bad'); return; }
 
-  const title = $('#ltitle').value.trim() || 'Lecture';
+  const title = $('#ltitle').value.trim() || `Lecture ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(':', '.').replace(' ', '')}`;
   const date = localDate();
   let made;
   try { made = await makeLectureDir(course, date, title); }
   catch { stream.getTracks().forEach(t => t.stop()); recMsg('Couldn\'t create the lecture folder. Choose the Fall2026 folder again.', 'bad'); return; }
 
-  Object.assign(R, { active: true, paused: false, dir: made.dir, path: made.path, stream, activeMs: 0, since: performance.now(), segs: [], marks: [], slide: 0, interim: '', dirty: true, segIndex: 0, srErr: null, netFails: 0, lastSave: 0 });
+  Object.assign(R, { active: true, paused: false, dir: made.dir, path: made.path, stream, activeMs: 0, since: performance.now(), segs: [], marks: [], slide: 0, interim: '', dirty: true, segIndex: 0, srErr: null, netFails: 0, lastSave: 0, peak: 0, silentWarned: false });
   R.meta = { version: 1, course, title, date, startedAt: new Date().toISOString(), endedAt: null, status: 'recording', durationSec: 0, words: 0, audio: [] };
   store.set('rec-course', course);
 
@@ -433,15 +437,22 @@ function onTick() {
   $('#timer').textContent = fmt(elapsed());
   if (R.mr && !R.paused && elapsed() - R.mr._start >= SEG_SECONDS) rotateSegment();
   if (Date.now() - R.lastSave > SAVE_EVERY && !R.saving) save();
+  if (!R.silentWarned && elapsed() > 8 && (R.peak || 0) < 0.002) {
+    R.silentWarned = true;
+    const w = $('#micWarn'); const label = $('#micSel').selectedOptions[0]?.textContent || 'the selected mic';
+    w.innerHTML = `<b>No sound is coming in from ${esc(label)}.</b> Stop, pick <b>Microphone Array</b> in the Mic menu, and start again.`; w.hidden = false;
+  }
 }
 function startSegment() {
   const mr = new MediaRecorder(R.stream, { mimeType: R.mime, audioBitsPerSecond: 32000 });
   const parts = []; const idx = ++R.segIndex; const dir = R.dir; const meta = R.meta;
   mr._start = elapsed();
   mr.ondataavailable = e => { if (e.data && e.data.size) parts.push(e.data); };
+  mr._done = new Promise(res => { mr._res = res; });
   mr.onstop = () => {
     const blob = new Blob(parts, { type: R.mime });
     if (blob.size) { audioQueue.push({ blob, dir, meta, file: `audio-${pad(idx)}.webm`, start: Math.round(mr._start), end: Math.round(mr._end ?? elapsed()) }); flushAudio(); }
+    mr._res();
   };
   mr.start(5000); R.mr = mr;
 }
@@ -564,22 +575,37 @@ async function stopRecording() {
   R.paused = true; R.srWanted = false;
   try { R.sr?.stop(); } catch {}
   await sleep(700); // let the last spoken phrase finalize
-  if (R.mr && R.mr.state !== 'inactive') { R.mr._end = R.activeMs / 1000; try { R.mr.stop(); } catch {} }
+  if (R.mr && R.mr.state !== 'inactive') {
+    R.mr._end = R.activeMs / 1000; try { R.mr.stop(); } catch {}
+    await Promise.race([R.mr._done, sleep(4000)]);
+    for (let i = 0; i < 80 && (flushing || audioQueue.length); i++) await sleep(100);
+  }
   R.stream?.getTracks().forEach(t => t.stop()); stopMeter(); clearInterval(R.tick);
   try { await R.wake?.release(); } catch {}
   R.active = false;
   R.meta.status = 'done'; R.meta.endedAt = new Date().toISOString();
+  const silent = (R.peak || 0) < 0.002;
+  if (!R.meta.words && (R.activeMs / 1000 < 30 || silent)) {
+    try { const parent = await (await root.getDirectoryHandle(R.meta.course)).getDirectoryHandle('lectures'); await parent.removeEntry(R.path.split('\\').pop(), { recursive: true }); } catch {}
+    resetUi();
+    recMsg(silent ? '<b>Nothing was saved — the mic picked up no sound.</b> Pick <b>Microphone Array</b> in the Mic menu and try again.' : 'Short test with no words caught, so nothing was saved. Talk for about 20 seconds when you test.', 'bad');
+    setTimeout(refreshRecent, 800);
+    return;
+  }
   const ok = await save();
   const meta = R.meta, path = R.path;
+  resetUi();
+  if (ok) recMsg(`Saved <b>${esc(meta.title)}</b> · ${fmt(meta.durationSec)} · ${meta.words.toLocaleString()} words<br><span class="path">Fall2026\\${esc(path)}</span>`, 'ok');
+  else recMsg('The last save failed. Don\'t close this tab — click Change folder, pick Fall2026 again, and the next save will go through.', 'bad');
+  setTimeout(refreshRecent, 1500);
+}
+function resetUi() {
   $('#recBtn').classList.remove('on'); $('#recBtn').setAttribute('aria-label', 'Start recording');
   $('#liveCtl').hidden = true; $('#stopBtn').disabled = false; for (const id of ['#keepAudio', '#course', '#checkBtn', '#pickBtn', '#micSel']) $(id).disabled = false;
   $('#slideBtn').firstChild.textContent = 'Next slide';
   $('#recState').textContent = 'Ready'; $('#recState').className = '';
   chip($('#chMic'), 'Mic · off'); chip($('#chTx'), 'Transcript · off'); if (!R.mr) chip($('#chAudio'), 'Audio · off');
   R.mr = null; R.sr = null; R.stream = null; R.interim = '';
-  if (ok) recMsg(`Saved <b>${esc(meta.title)}</b> · ${fmt(meta.durationSec)} · ${meta.words.toLocaleString()} words<br><span class="path">Fall2026\\${esc(path)}</span>`, 'ok');
-  else recMsg('The last save failed. Don\'t close this tab — click Change folder, pick Fall2026 again, and the next save will go through.', 'bad');
-  setTimeout(refreshRecent, 1500);
 }
 
 async function checkMic() {
@@ -618,15 +644,26 @@ async function refreshRecent() {
   for (const c of courses) {
     try {
       const ldir = await (await root.getDirectoryHandle(c)).getDirectoryHandle('lectures');
-      for await (const [name, h] of ldir.entries()) if (h.kind === 'directory') rows.push({ course: c, name });
+      for await (const [name, h] of ldir.entries()) if (h.kind === 'directory') {
+        let info = null; try { info = JSON.parse(await (await (await h.getFileHandle('lecture.json')).getFile()).text()); } catch {}
+        rows.push({ course: c, name, info });
+      }
     } catch { /* no lectures yet */ }
   }
   rows.sort((a, b) => b.name.localeCompare(a.name));
   $('#recentCount').textContent = rows.length ? `${rows.length} total` : '';
   $('#recent').innerHTML = rows.length
-    ? rows.slice(0, 12).map(r => `<div class="row static"><span class="d">${esc(r.name.slice(5, 10).replace('-', '/'))}</span><span class="c">${esc(r.course.split('-').slice(0, 2).join(' '))}</span><span class="ti">${esc(r.name.slice(11) || r.name)}</span></div>`).join('')
+    ? rows.slice(0, 15).map(r => `<div class="row static"><span class="d">${esc(r.name.slice(5, 10).replace('-', '/'))}</span><span class="c">${esc(r.course.split('-').slice(0, 2).join(' '))}</span><span class="ti">${esc(r.name.slice(11) || r.name)}</span><span class="dur">${r.info ? fmt(r.info.durationSec) : ''}</span><span class="wc ${r.info && !r.info.words ? 'zero' : ''}">${r.info ? (r.info.words ? r.info.words.toLocaleString() + ' words' : 'no words') : ''}</span><button class="ghost del" data-course="${esc(r.course)}" data-name="${esc(r.name)}">Delete</button></div>`).join('')
     : '<div class="libempty">Nothing recorded yet. Each lecture gets its own folder with transcript.md, lecture.json and the audio parts.</div>';
 }
+
+$('#recent').addEventListener('click', async e => {
+  const b = e.target.closest('button.del'); if (!b || R.active) return;
+  if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = 'Tap again to delete'; setTimeout(() => { if (b.isConnected) { b.classList.remove('armed'); b.textContent = 'Delete'; } }, 4000); return; }
+  try { const ldir = await (await root.getDirectoryHandle(b.dataset.course)).getDirectoryHandle('lectures'); await ldir.removeEntry(b.dataset.name, { recursive: true }); }
+  catch { recMsg('Couldn\'t delete that folder. Delete it in File Explorer instead.', 'bad'); }
+  refreshRecent();
+});
 
 /* ---------- events ---------- */
 $('#pickBtn').addEventListener('click', async () => { const saved = await kvGet('root'); if (!root && saved) reconnect(saved); else pickFolder(); });
