@@ -380,7 +380,7 @@ function startMeter(stream) {
   try {
     const ac = new AudioContext(); const an = ac.createAnalyser(); an.fftSize = 1024; ac.createMediaStreamSource(stream).connect(an);
     const buf = new Float32Array(an.fftSize); let last = 0;
-    const loop = t => { meter.raf = requestAnimationFrame(loop); if (t - last < 60) return; last = t; an.getFloatTimeDomainData(buf); let sum = 0; for (const x of buf) sum += x * x; const lvl = Math.sqrt(sum / buf.length); if (!R.paused) R.peak = Math.max(R.peak || 0, lvl); levels.shift(); levels.push(R.paused ? 0 : lvl); drawWave(); };
+    const loop = t => { meter.raf = requestAnimationFrame(loop); if (t - last < 60) return; last = t; an.getFloatTimeDomainData(buf); let sum = 0; for (const x of buf) sum += x * x; const lvl = Math.sqrt(sum / buf.length); if (!R.paused) { R.peak = Math.max(R.peak || 0, lvl); if (lvl > 0.02) R.lastLoud = Date.now(); } levels.shift(); levels.push(R.paused ? 0 : lvl); drawWave(); };
     meter = { ac, raf: requestAnimationFrame(loop) };
   } catch { meter = null; }
 }
@@ -418,7 +418,7 @@ async function startRecording() {
   try { made = await makeLectureDir(course, date, title); }
   catch { stream.getTracks().forEach(t => t.stop()); recMsg('Couldn\'t create the lecture folder. Choose the Fall2026 folder again.', 'bad'); return; }
 
-  Object.assign(R, { active: true, paused: false, dir: made.dir, path: made.path, stream, activeMs: 0, since: performance.now(), segs: [], marks: [], slide: 0, interim: '', dirty: true, segIndex: 0, srErr: null, netFails: 0, lastSave: 0, peak: 0, silentWarned: false });
+  Object.assign(R, { active: true, paused: false, dir: made.dir, path: made.path, stream, activeMs: 0, since: performance.now(), segs: [], marks: [], slide: 0, interim: '', dirty: true, segIndex: 0, srErr: null, netFails: 0, lastSave: 0, peak: 0, silentWarned: false, lastHeard: Date.now(), lastLoud: 0, srRestarts: 0 });
   R.meta = { version: 1, course, title, date, startedAt: new Date().toISOString(), endedAt: null, status: 'recording', durationSec: 0, words: 0, audio: [] };
   store.set('rec-course', course);
 
@@ -440,6 +440,11 @@ function onTick() {
   $('#timer').textContent = fmt(elapsed());
   if (R.mr && !R.paused && elapsed() - R.mr._start >= SEG_SECONDS) rotateSegment();
   if (Date.now() - R.lastSave > SAVE_EVERY && !R.saving) save();
+  // watchdog: Chrome's live transcript can stall silently while he keeps talking — restart it
+  if (R.srWanted && !R.paused && Date.now() - R.lastHeard > 25000 && Date.now() - (R.lastLoud || 0) < 4000) {
+    R.lastHeard = Date.now(); R.srRestarts++; restartSR();
+    chip($('#chTx'), `Transcript · restarted after a stall (${R.srRestarts})`, 'warn');
+  }
   if (!R.silentWarned && elapsed() > 8 && (R.peak || 0) < 0.002) {
     R.silentWarned = true;
     const w = $('#micWarn'); const label = $('#micSel').selectedOptions[0]?.textContent || 'the selected mic';
@@ -486,7 +491,7 @@ function startSR() {
       if (res.isFinal) { R.segs.push({ t: Math.round(elapsed()), x: txt }); R.meta.words += words(txt); R.dirty = true; }
       else interim += txt + ' ';
     }
-    R.interim = interim.trim(); R.netFails = 0;
+    R.interim = interim.trim(); R.netFails = 0; R.lastHeard = Date.now();
     chip($('#chTx'), `Transcript · ${R.meta.words.toLocaleString()} words`, 'ok'); renderLive();
   };
   r.onerror = e => {
@@ -502,6 +507,11 @@ function startSR() {
   };
   R.sr = r; R.srWanted = true;
   try { r.start(); chip($('#chTx'), 'Transcript · listening', 'ok'); } catch { chip($('#chTx'), 'Transcript · couldn\'t start', 'bad'); }
+}
+function restartSR() {
+  const old = R.sr;
+  if (old) { old.onend = null; old.onresult = null; old.onerror = null; try { old.abort(); } catch {} }
+  R.sr = null; startSR();
 }
 function mergeItems(segs, marks) {
   return [...segs.map(s => ({ t: s.t, k: 'x', x: s.x })), ...marks.map(m => ({ t: m.t, k: m.k, n: m.n }))].sort((a, b) => a.t - b.t || (a.k === 'x') - (b.k === 'x'));
@@ -558,7 +568,7 @@ function togglePause() {
     try { R.mr?.pause(); } catch {} try { R.sr?.stop(); } catch {}
     $('#pauseBtn').textContent = 'Resume'; $('#recState').textContent = 'Paused'; $('#recState').className = ''; chip($('#chTx'), 'Transcript · paused', 'warn');
   } else {
-    R.since = performance.now(); R.paused = false;
+    R.since = performance.now(); R.paused = false; R.lastHeard = Date.now();
     try { R.mr?.resume(); } catch {} if (R.srWanted) { try { R.sr?.start(); } catch {} }
     $('#pauseBtn').textContent = 'Pause'; $('#recState').textContent = `Recording · ${R.meta.course.replace(/-/g, ' ')}`; $('#recState').className = 'live'; chip($('#chTx'), 'Transcript · listening', 'ok');
   }
