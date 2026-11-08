@@ -1,0 +1,19 @@
+# Keyterms for CIS3367: one per line, max 1000, each at most 5 words / 50 characters.
+# Starter list pulled from the bold terms in your study notes on 2026-11-08. Add or delete freely.
+Cisco Packet Tracer
+CLI alternative
+Copper Cross-Over
+DORA
+ICMP
+IP addresses
+no fiber ports
+no port number
+Three-way handshake
+Troubleshooting
+Use TCP
+Use UDP
+who writes which label
+Wireshark Protocol Analyzer
+Works
+Works now
+Zero overlap

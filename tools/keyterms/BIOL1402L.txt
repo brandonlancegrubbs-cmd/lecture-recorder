@@ -1,0 +1,43 @@
+# Keyterms for BIOL1402L: one per line, max 1000, each at most 5 words / 50 characters.
+# Starter list pulled from the bold terms in your study notes on 2026-11-08. Add or delete freely.
+additive
+average
+Balanced rotor
+Benedict’s
+Blue
+Cap
+chart legend
+class dataset
+dependent variable
+diaphragm
+distilled water
+Figure 1
+figure legend
+III
+larger molecules
+Links to
+Mastery tracking
+Micropipettor
+molar mass
+no chart legend
+no comma
+P-value
+Part IV
+Part V
+Parts I–III
+propanol
+Replace Q6
+sample 3, distilled water
+Second stop
+Solute
+Solvent
+standard deviation
+stock solution
+Subscripts count
+the 1.2 one
+the motor gets damaged
+too much
+Total
+Trimmed
+Type 1, paired t-test
+Yellow
