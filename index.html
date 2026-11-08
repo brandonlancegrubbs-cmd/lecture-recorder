@@ -88,6 +88,14 @@ kbd{font-size:10px;border:1px solid var(--rule-hard);border-bottom-width:2px;bor
 .mark{font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:2px;justify-self:start}
 .mark.star{background:var(--gold-soft);color:var(--gold)}
 .mark.slide{background:var(--accent-soft);color:var(--accent)}
+.mark.exam{background:var(--alert);color:#fff}
+.mark.confused{background:var(--surface);color:var(--alert);border:1px solid var(--alert)}
+.mark.example{background:var(--surface);color:var(--ink,inherit);border:1px solid var(--rule-hard)}
+.mark.ann{background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold)}
+.ln.hit span:last-child{background:var(--gold-soft)}
+.vaultline{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:8px}
+.vaultline button{font-size:12px;padding:2px 8px;margin-left:8px}
+.row.static .fin{font-size:12px;padding:4px 6px;color:var(--alert)}
 .recfoot{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
 .toggle{display:flex;align-items:center;gap:6px;margin:0 0 0 auto;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--ink)}
 .msg{font-size:14.5px;padding:10px 14px;border-radius:2px;background:var(--gold-soft);color:var(--ink);border-left:3px solid var(--gold)}
@@ -202,6 +210,7 @@ code{font-family:var(--mono);font-size:.88em;background:var(--sunken);padding:1p
       <div id="folderName" class="foldername">No folder chosen</div>
     </div>
     <button id="pickBtn" class="primary">Choose your Fall2026 folder</button>
+    <div class="vaultline" style="flex-basis:100%">Vault copy: <span id="vaultName">off</span><button id="vaultBtn" class="ghost">Choose vault folder</button></div>
   </section>
 
   <section class="card rec" aria-label="Recorder">
@@ -229,6 +238,9 @@ code{font-family:var(--mono);font-size:.88em;background:var(--sunken);padding:1p
       <button id="pauseBtn">Pause</button>
       <button id="starBtn">★ Important<kbd>I</kbd></button>
       <button id="slideBtn">Next slide<kbd>S</kbd></button>
+      <button id="examBtn">On the exam<kbd>E</kbd></button>
+      <button id="confBtn">I'm confused<kbd>Q</kbd></button>
+      <button id="exBtn">Example<kbd>X</kbd></button>
       <button id="stopBtn" class="danger">Stop &amp; save</button>
     </div>
 
@@ -257,7 +269,7 @@ code{font-family:var(--mono);font-size:.88em;background:var(--sunken);padding:1p
     <div class="list" id="recent" style="margin-top:12px"><div class="libempty">Your recordings show up here once the folder is chosen.</div></div>
   </section>
 
-  <p class="hint foot">Keep this tab open and the laptop plugged in during class. Transcript saves every 15 seconds; audio saves in 10-minute parts.</p>
+  <p class="hint foot">Keep this tab open and the laptop plugged in during class. Transcript saves every 15 seconds; audio saves in 10-minute parts. Keys while recording: I important · S next slide · E on the exam · Q confused · X example. Open a class directly with <code>?course=BIOL1402&amp;title=Ch%206</code>.</p>
 </div>
 
 <script>
@@ -275,6 +287,14 @@ const store = {
 const localDate = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const SEG_SECONDS = 10 * 60;
 const SAVE_EVERY = 15000;
+// marks: I star, S slide, E exam, Q confused, X example; 'ann' is added automatically when he mentions a date/exam
+const MARKS = { star: '★ Important', exam: '‼ On the exam', confused: '? Confused', example: '✎ Example', ann: '📅 Announcement' };
+const ANN_RE = /\b(exam|quiz|midterm|final|test (?:is|on|will)|due|deadline|turn (?:it )?in|homework|assignment|no class|extra credit)\b/i;
+// Fall2026 folder -> course code (vault folder = code without the space)
+const COURSE_CODES = { 'BIOL-1402-Lecture': 'BIOL 1402', 'BIOL-1402L-Lab': 'BIOL 1402L', 'COMP-1-Composition': 'ENGL 1311', 'MATH-College-Algebra': 'MATH 1304', 'NET-Networking-Telecom': 'CIS 3367', 'SPAN-2-Spanish': 'SPAN 1312' };
+const courseCode = f => COURSE_CODES[f] || f.replace(/-/g, ' ');
+const vaultCourse = f => courseCode(f).replace(/\s+/g, '');
+const params = new URLSearchParams(location.search);
 
 /* ---------- folder handle (kept in IndexedDB) ---------- */
 function idb() {
@@ -284,6 +304,7 @@ async function kvGet(k) { try { const d = await idb(); return await new Promise(
 async function kvSet(k, v) { try { const d = await idb(); await new Promise(res => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = res; }); } catch {} }
 
 let root = null;       // Fall2026 directory handle
+let vault = null;      // optional agent-team vault handle (transcript copy goes to raw/school/<COURSE>/lectures/)
 let courses = [];      // subfolder names
 const fsOK = 'showDirectoryPicker' in window;
 
@@ -316,7 +337,7 @@ function micWarning(chromeDefault) {
 }
 function micConstraints(extra) {
   const id = $('#micSel').value;
-  return { audio: { ...(id ? { deviceId: { exact: id } } : {}), ...extra } };
+  return { audio: { channelCount: 1, ...(id ? { deviceId: { exact: id } } : {}), ...extra } };
 }
 
 async function listDirs(dir) { const out = []; for await (const [name, h] of dir.entries()) if (h.kind === 'directory' && !name.startsWith('.') && !name.startsWith('_')) out.push(name); return out.sort(); }
@@ -341,7 +362,9 @@ async function reconnect(h) {
   try { if ((await h.requestPermission({ mode: 'readwrite' })) === 'granted') await useRoot(h); } catch { await pickFolder(); }
 }
 function renderCourses() {
-  const keep = $('#course').value || store.get('rec-course') || '';
+  const want = params.get('course');
+  const fromUrl = want && courses.find(c => c === want || courseCode(c).replace(/\s+/g, '') === want.replace(/[\s-]+/g, '').toUpperCase());
+  const keep = fromUrl || $('#course').value || store.get('rec-course') || '';
   $('#course').innerHTML = '<option value="">Choose a class</option>' + courses.map(c => `<option value="${esc(c)}">${esc(c.replace(/-/g, ' '))}</option>`).join('');
   if (courses.includes(keep)) $('#course').value = keep;
 }
@@ -412,14 +435,14 @@ async function startRecording() {
   try { stream = await navigator.mediaDevices.getUserMedia(micConstraints({ echoCancellation: false, noiseSuppression: true, autoGainControl: true })); loadMics(); }
   catch (e) { recMsg(micFailCopy(e), 'bad'); chip($('#chMic'), 'Mic · blocked', 'bad'); return; }
 
-  const title = $('#ltitle').value.trim() || `Lecture ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(':', '.').replace(' ', '')}`;
+  const title = $('#ltitle').value.trim() || params.get('title') || `Lecture ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(':', '.').replace(' ', '')}`;
   const date = localDate();
   let made;
   try { made = await makeLectureDir(course, date, title); }
   catch { stream.getTracks().forEach(t => t.stop()); recMsg('Couldn\'t create the lecture folder. Choose the Fall2026 folder again.', 'bad'); return; }
 
   Object.assign(R, { active: true, paused: false, dir: made.dir, path: made.path, stream, activeMs: 0, since: performance.now(), segs: [], marks: [], slide: 0, interim: '', dirty: true, segIndex: 0, srErr: null, netFails: 0, lastSave: 0, peak: 0, silentWarned: false, lastHeard: Date.now(), lastLoud: 0, srRestarts: 0 });
-  R.meta = { version: 1, course, title, date, startedAt: new Date().toISOString(), endedAt: null, status: 'recording', durationSec: 0, words: 0, audio: [] };
+  R.meta = { version: 2, course, courseCode: courseCode(course), title, date, startedAt: new Date().toISOString(), endedAt: null, status: 'recording', durationSec: 0, words: 0, audio: [] };
   store.set('rec-course', course);
 
   chip($('#chMic'), 'Mic · on', 'ok'); startMeter(stream);
@@ -488,7 +511,12 @@ function startSR() {
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const res = e.results[i]; const txt = res[0].transcript.trim(); if (!txt) continue;
-      if (res.isFinal) { R.segs.push({ t: Math.round(elapsed()), x: txt }); R.meta.words += words(txt); R.dirty = true; }
+      if (res.isFinal) {
+        const t = Math.round(elapsed());
+        R.segs.push({ t, x: txt }); R.meta.words += words(txt); R.dirty = true;
+        const lastAnn = [...R.marks].reverse().find(m => m.k === 'ann');
+        if (ANN_RE.test(txt) && (!lastAnn || t - lastAnn.t > 30)) R.marks.push({ t, k: 'ann', q: txt.slice(0, 160) });
+      }
       else interim += txt + ' ';
     }
     R.interim = interim.trim(); R.netFails = 0; R.lastHeard = Date.now();
@@ -519,8 +547,8 @@ function mergeItems(segs, marks) {
 function renderLive() {
   const recent = R.segs.slice(-14); const from = recent.length ? recent[0].t : 0;
   let html = mergeItems(recent, R.marks.filter(m => m.t >= from)).map(it => it.k === 'x'
-    ? `<div class="ln"><span class="t">${fmt(it.t)}</span><span>${esc(it.x)}</span></div>`
-    : `<div class="ln"><span class="t">${fmt(it.t)}</span><span class="mark ${it.k}">${it.k === 'star' ? '★ Important' : 'Slide ' + it.n}</span></div>`).join('');
+    ? `<div class="ln${ANN_RE.test(it.x) ? ' hit' : ''}"><span class="t">${fmt(it.t)}</span><span>${esc(it.x)}</span></div>`
+    : `<div class="ln"><span class="t">${fmt(it.t)}</span><span class="mark ${it.k}">${it.k === 'slide' ? 'Slide ' + it.n : MARKS[it.k] || it.k}</span></div>`).join('');
   if (R.interim) html += `<div class="ln"><span class="t">…</span><span class="interim">${esc(R.interim)}</span></div>`;
   if (!html) html = '<p class="empty">Listening. Words show up a second or two after he says them.</p>';
   const box = $('#live'); box.innerHTML = html; box.scrollTop = box.scrollHeight;
@@ -530,11 +558,15 @@ function transcriptMd(meta, segs, marks) {
   const lines = [`# ${meta.course.replace(/-/g, ' ')} · ${meta.title}`, '',
     `Date: ${meta.date} · Started ${new Date(meta.startedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · Length ${fmt(meta.durationSec)} · ${meta.words.toLocaleString()} words`,
     `Status: ${meta.status === 'recording' ? 'still recording (or the tab closed mid-lecture)' : 'raw live transcript, not cleaned up'}`,
-    'Marks: [★ m:ss] = student tapped Important · [Slide n · m:ss] = the professor moved to slide n', ''];
+    'Marks: [★ m:ss] Important · [‼ EXAM m:ss] he said it is on the exam · [? CONFUSED m:ss] student lost here · [✎ EXAMPLE m:ss] worked example · [📅 ANNOUNCEMENT m:ss] date/exam/due mention (auto) · [Slide n · m:ss] slide change', ''];
   let last = -999; let para = [];
   const flush = () => { if (para.length) { lines.push(para.join(' '), ''); para = []; } };
   for (const it of mergeItems(segs, marks)) {
     if (it.k === 'star') { flush(); lines.push(`[★ ${fmt(it.t)}]`, ''); }
+    else if (it.k === 'exam') { flush(); lines.push(`[‼ EXAM ${fmt(it.t)}]`, ''); }
+    else if (it.k === 'confused') { flush(); lines.push(`[? CONFUSED ${fmt(it.t)}]`, ''); }
+    else if (it.k === 'example') { flush(); lines.push(`[✎ EXAMPLE ${fmt(it.t)}]`, ''); }
+    else if (it.k === 'ann') { flush(); lines.push(`[📅 ANNOUNCEMENT ${fmt(it.t)}]`, ''); }
     else if (it.k === 'slide') { flush(); lines.push(`[Slide ${it.n} · ${fmt(it.t)}]`, ''); last = it.t; }
     else { if (it.t - last >= 120) { flush(); lines.push(`[${fmt(it.t)}]`, ''); last = it.t; } para.push(it.x); }
   }
@@ -578,7 +610,7 @@ function addMark(kind) {
   if (!R.active) return;
   const t = Math.round(elapsed());
   if (kind === 'slide') { R.slide++; R.marks.push({ t, k: 'slide', n: R.slide }); $('#slideBtn').firstChild.textContent = `Next slide · on ${R.slide}`; }
-  else R.marks.push({ t, k: 'star' });
+  else R.marks.push({ t, k: MARKS[kind] ? kind : 'star' });
   R.dirty = true; renderLive();
 }
 async function stopRecording() {
@@ -608,9 +640,34 @@ async function stopRecording() {
   const ok = await save();
   const meta = R.meta, path = R.path;
   resetUi();
-  if (ok) recMsg(`Saved <b>${esc(meta.title)}</b> · ${fmt(meta.durationSec)} · ${meta.words.toLocaleString()} words<br><span class="path">Fall2026\\${esc(path)}</span>`, 'ok');
+  const vaultPath = ok ? await copyToVault(meta, path) : null;
+  if (ok) recMsg(`Saved <b>${esc(meta.title)}</b> · ${fmt(meta.durationSec)} · ${meta.words.toLocaleString()} words<br><span class="path">Fall2026\\${esc(path)}</span>${vaultPath ? `<br><span class="path">Vault copy: ${esc(vaultPath)}</span>` : (vault ? '<br>Vault copy failed. Reconnect the vault folder; the transcript is still in Fall2026.' : '')}`, 'ok');
   else recMsg('The last save failed. Don\'t close this tab — click Change folder, pick Fall2026 again, and the next save will go through.', 'bad');
   setTimeout(refreshRecent, 1500);
+}
+async function copyToVault(meta, path) {
+  if (!vault) return null;
+  try {
+    if ((await vault.queryPermission({ mode: 'readwrite' })) !== 'granted' && (await vault.requestPermission({ mode: 'readwrite' })) !== 'granted') return null;
+    let d = vault;
+    for (const part of ['raw', 'school', vaultCourse(meta.course), 'lectures']) d = await d.getDirectoryHandle(part, { create: true });
+    const name = path.split('\\').pop() + '.md';
+    const md = ['---', `course: ${courseCode(meta.course)}`, `date: ${meta.date}`, `title: "${String(meta.title).replace(/"/g, "'")}"`, `duration_sec: ${meta.durationSec}`, `words: ${meta.words}`,
+      `source: "Fall2026/${path.replace(/\\/g, '/')}"`, 'transcript: raw live (Chrome), not cleaned', '---', '', transcriptMd(meta, meta.segs || [], meta.marks || [])].join('\n');
+    await writeFile(d, name, md);
+    return `raw/school/${vaultCourse(meta.course)}/lectures/${name}`;
+  } catch { return null; }
+}
+async function finishLecture(course, name) {
+  try {
+    const h = await (await (await root.getDirectoryHandle(course)).getDirectoryHandle('lectures')).getDirectoryHandle(name);
+    const meta = JSON.parse(await (await (await h.getFileHandle('lecture.json')).getFile()).text());
+    meta.status = 'done'; meta.endedAt = meta.endedAt || new Date().toISOString(); meta.recovered = true;
+    await writeMeta(h, meta, null);
+    const vp = await copyToVault(meta, `${course}\\lectures\\${name}`);
+    recMsg(`Finished saving <b>${esc(meta.title)}</b> · ${fmt(meta.durationSec)} · ${(meta.words || 0).toLocaleString()} words (saved up to the last 15-second save before the tab closed).${vp ? '<br><span class="path">Vault copy: ' + esc(vp) + '</span>' : ''}`, 'ok');
+  } catch { recMsg('Couldn\'t finish that lecture. Its files are still in the folder.', 'bad'); }
+  refreshRecent();
 }
 function resetUi() {
   $('#recBtn').classList.remove('on'); $('#recBtn').setAttribute('aria-label', 'Start recording');
@@ -666,11 +723,12 @@ async function refreshRecent() {
   rows.sort((a, b) => b.name.localeCompare(a.name));
   $('#recentCount').textContent = rows.length ? `${rows.length} total` : '';
   $('#recent').innerHTML = rows.length
-    ? rows.slice(0, 15).map(r => `<div class="row static"><span class="d">${esc(r.name.slice(5, 10).replace('-', '/'))}</span><span class="c">${esc(r.course.split('-').slice(0, 2).join(' '))}</span><span class="ti">${esc(r.name.slice(11) || r.name)}</span><span class="dur">${r.info ? fmt(r.info.durationSec) : ''}</span><span class="wc ${r.info && !r.info.words ? 'zero' : ''}">${r.info ? (r.info.words ? r.info.words.toLocaleString() + ' words' : 'no words') : ''}</span><button class="ghost del" data-course="${esc(r.course)}" data-name="${esc(r.name)}">Delete</button></div>`).join('')
+    ? rows.slice(0, 15).map(r => `<div class="row static"><span class="d">${esc(r.name.slice(5, 10).replace('-', '/'))}</span><span class="c">${esc(r.course.split('-').slice(0, 2).join(' '))}</span><span class="ti">${esc(r.name.slice(11) || r.name)}</span><span class="dur">${r.info ? fmt(r.info.durationSec) : ''}</span><span class="wc ${r.info && !r.info.words ? 'zero' : ''}">${r.info ? (r.info.words ? r.info.words.toLocaleString() + ' words' : 'no words') : ''}</span>${r.info && r.info.status === 'recording' && !R.active ? `<button class="ghost fin" data-course="${esc(r.course)}" data-name="${esc(r.name)}" title="The tab closed mid-lecture">Finish saving</button>` : `<button class="ghost del" data-course="${esc(r.course)}" data-name="${esc(r.name)}">Delete</button>`}</div>`).join('')
     : '<div class="libempty">Nothing recorded yet. Each lecture gets its own folder with transcript.md, lecture.json and the audio parts.</div>';
 }
 
 $('#recent').addEventListener('click', async e => {
+  const f = e.target.closest('button.fin'); if (f && !R.active) { finishLecture(f.dataset.course, f.dataset.name); return; }
   const b = e.target.closest('button.del'); if (!b || R.active) return;
   if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = 'Tap again to delete'; setTimeout(() => { if (b.isConnected) { b.classList.remove('armed'); b.textContent = 'Delete'; } }, 4000); return; }
   try { const ldir = await (await root.getDirectoryHandle(b.dataset.course)).getDirectoryHandle('lectures'); await ldir.removeEntry(b.dataset.name, { recursive: true }); }
@@ -685,6 +743,16 @@ $('#stopBtn').addEventListener('click', stopRecording);
 $('#pauseBtn').addEventListener('click', togglePause);
 $('#starBtn').addEventListener('click', () => addMark('star'));
 $('#slideBtn').addEventListener('click', () => addMark('slide'));
+$('#examBtn').addEventListener('click', () => addMark('exam'));
+$('#confBtn').addEventListener('click', () => addMark('confused'));
+$('#exBtn').addEventListener('click', () => addMark('example'));
+async function useVault(h) { vault = h; await kvSet('vault', h); $('#vaultName').textContent = `${h.name} → raw/school/<class>/lectures/`; $('#vaultBtn').textContent = 'Change'; }
+$('#vaultBtn').addEventListener('click', async () => {
+  const saved = await kvGet('vault');
+  if (!vault && saved) { try { if ((await saved.requestPermission({ mode: 'readwrite' })) === 'granted') { await useVault(saved); return; } } catch {} }
+  try { await useVault(await window.showDirectoryPicker({ id: 'agent-team-vault', mode: 'readwrite', startIn: 'documents' })); }
+  catch (e) { if (e?.name !== 'AbortError') recMsg('Couldn\'t open that folder. Pick <b>Documents › agent-team</b>.', 'bad'); }
+});
 $('#checkBtn').addEventListener('click', checkMic);
 $('#micSel').addEventListener('change', e => { store.set('rec-mic', e.target.value); loadMics(); });
 navigator.mediaDevices?.addEventListener?.('devicechange', loadMics);
@@ -693,7 +761,8 @@ document.addEventListener('keydown', e => {
   if (!R.active || e.ctrlKey || e.metaKey || e.altKey) return;
   if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) return;
   const k = e.key.toLowerCase();
-  if (k === 'i') { e.preventDefault(); addMark('star'); } else if (k === 's') { e.preventDefault(); addMark('slide'); }
+  const map = { i: 'star', s: 'slide', e: 'exam', q: 'confused', x: 'example' };
+  if (map[k]) { e.preventDefault(); addMark(map[k]); }
 });
 window.addEventListener('beforeunload', e => { if (R.active) { e.preventDefault(); e.returnValue = ''; } });
 document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible' && R.active && (!R.wake || R.wake.released)) { try { R.wake = await navigator.wakeLock?.request('screen'); } catch {} } });
@@ -708,6 +777,9 @@ loadMics();
     $('#banner').innerHTML = 'Open this file in <b>Google Chrome</b>. This browser can\'t save into your folders or record.'; $('#banner').hidden = false;
     $('#pickBtn').disabled = true; return;
   }
+  if (params.get('title')) $('#ltitle').value = params.get('title');
+  const savedVault = await kvGet('vault');
+  if (savedVault) { let vp = 'prompt'; try { vp = await savedVault.queryPermission({ mode: 'readwrite' }); } catch {} if (vp === 'granted') useVault(savedVault); else { $('#vaultName').textContent = `${savedVault.name} · click Reconnect`; $('#vaultBtn').textContent = 'Reconnect'; } }
   const saved = await kvGet('root');
   if (saved) {
     let perm = 'prompt'; try { perm = await saved.queryPermission({ mode: 'readwrite' }); } catch {}
