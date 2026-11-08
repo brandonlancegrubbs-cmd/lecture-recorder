@@ -1,0 +1,367 @@
+# Keyterms for BIOL1402: one per line, max 1000, each at most 5 words / 50 characters.
+# Starter list pulled from the bold terms in your study notes on 2026-11-08. Add or delete freely.
+Absolute qualifier
+Acid
+Activation energy
+Active site
+Active transport
+adenosine triphosphate
+Adhesion
+Affinity
+affinity for water
+All membranes
+Allosteric site
+Alternative hypothesis
+Amphipathic
+Anaerobic respiration
+Anion
+Antenna complex
+Antiparallel
+Aquaporins
+Aqueous solution
+Atom
+atomic number
+ATP
+ATP used indirectly
+ATP yield
+Attachment to the cytoskeleton
+backwards
+Base
+Bases
+between the phosphates
+Bilayer
+Bilayers are fluid
+Biology
+Biosphere
+Buffer
+Can’t
+Carbohydrates
+Carbon fixation
+carboxyl
+Carrier protein
+catalase
+Cation
+Cell
+Cell theory
+Cell-surface identity marker
+Cell-surface receptor
+Cell-to-cell adhesion
+Cells
+Cellular Organization
+Cellulose
+Channel protein
+Chaperonins
+Charles Darwin
+chemical energy
+Chemiosmosis
+Cholesterol
+CHON
+Cohesion
+Community
+Complementary base pairing
+Complete
+Compound
+Concentration gradient
+containing membrane-bound organelles
+control
+Control group
+controlled experiment
+Coupled transport
+Cristae
+Crosses easily
+Cytoplasm
+Cytoskeleton fibers
+Darwin's two points
+Deductive
+deductive prediction
+Deductive reasoning
+Denaturation
+Descent with modification
+descriptive
+different
+Diffusion
+diffusion of water
+Direction
+discharge of materials out
+diversity
+DNA
+does the dissolving
+Domain
+double membrane
+Ecology
+Ecosystem
+Electron transport chain
+Electronegativity
+electrons
+Element
+Emergent properties
+Emergent property
+Endocytosis
+Endomembrane system
+Endosymbiosis
+Energy
+energy storage
+Energy Utilization
+Entropy
+Enzyme
+enzymes
+equal sharing
+Equilibrium
+ETC
+Eukaryotic cell
+Evaporative cooling
+Evolution
+Evolutionary Adaptation
+Exocytosis
+Experimental group
+Facilitated
+Facilitated diffusion
+fail to reject
+Falsifiable
+Familial hypercholesterolemia
+Fat
+Feedback inhibition
+Fermentation
+Final electron acceptor
+Fluid
+Found in
+Four components
+four fused rings
+free phosphate
+free –OH
+full set together
+gain or lose water
+Gated channel
+Gene expression
+Genetic transmission
+Genetics and cell biology
+Glucose
+glycerol and fatty acids
+glycosidic linkage
+greater
+Growth, Development, and Reproduction
+Hard or blocked
+He is right
+Head
+Heat of vaporization
+Held together by
+Hierarchical organization
+High-energy bonds
+higher solute
+highly electronegative
+Homeostasis
+Hydrocarbon
+Hydrogen bond
+hydrogen bonding
+hydrogen bonds
+Hydrogen ion
+Hydrolysis
+Hydronium ion
+Hydrophilic
+hydrophilic channel when open
+hydrophilic heads point outward
+Hydrophobic
+hydrophobic tails point inward
+Hydroxide ion
+hydroxyl
+Hypertonic
+Hyponatremia
+Hypothesis
+Hypotonic
+If no fluidity
+Inductive
+Inductive reasoning
+Inhibitor
+inorganic
+Integral protein
+interbreeding
+interconnected concepts
+internal
+Ion channel
+Ionic bond
+ionic bonds
+Ionic compound
+Isomerase
+Isomers
+Isotonic
+Isotope
+Job
+Jobs
+Junctions
+keratin
+Kinetic energy
+lacking a membrane-bound nucleus
+large, complex molecules
+leak-proof seal
+less electronegative
+Ligand
+Lipid
+loses shape and function
+lost as heat
+lower solute
+Lysosome
+Macromolecule
+Macromolecules
+Membrane fluidity
+membrane-bound transport sac
+Micelle
+Molecular biology
+Molecule
+more electronegative
+Mosaic
+MOST certain
+Motif
+multiple linear chromosomes
+NADH
+Natural selection
+Net diffusion
+Neuroscience and evolutionary biology
+neutral
+neutrons
+no energy investment
+no membrane
+no net movement
+Nonpolar
+Nonpolar covalent bond
+Nucleic acid
+Nucleoid
+Nucleolus
+Nucleotide
+Nucleus
+Null hypothesis
+observation and reasoning
+one circular DNA molecule
+one line
+Order
+Organ
+Organ system
+Organelle
+organic
+Organism
+organisms
+Osmoregulation
+Osmosis
+other polar surfaces
+other water molecules
+over-selected
+Own DNA
+Oxidation
+oxidation of fatty acids
+Oxidative phosphorylation
+Oxygen
+particulate matter
+Passive transport
+Peroxisome
+Phagocytosis
+Phosphodiester linkage
+Phospholipid bilayer
+Phosphorylation
+Pigment
+Pinocytosis
+Plant cell, hypotonic
+Plasma membrane
+Polar
+Polar covalent bond
+Population
+premise 1
+premise 2
+primary energy currency
+Products
+Prokaryotic cell
+Protein
+protein synthesis machinery
+Proteins
+Proton
+Proton-motive force
+protons
+pure water 7
+Pyruvate dehydrogenase
+quantitative
+R group
+Reaction center
+Receptor-mediated
+Redox
+Reduction
+Reductionism
+reject the null hypothesis
+removes
+Resolution
+Result
+Ribose
+ribosomal RNA synthesis
+Ribosome
+Ribosomes
+RNA
+Saturated fatty acid
+Saturated fatty acids
+Scientific theory
+Secretory proteins
+Selective permeability
+Semipermeable membrane
+Sensitivity
+Shape
+Simple diffusion
+single six-membered ring
+small and nonpolar
+smaller
+Smooth ER
+Solute
+Solution
+Solvent
+spans the entire membrane
+Specific heat
+Sphingomyelin
+Spontaneously
+statement of no difference
+Steroid
+Stroma
+strong anchoring
+stronger
+Structure
+Substrate-level phosphorylation
+subtle change in shape
+sulfhydryl
+sunlight
+surface
+surrounding solution
+Systems biology
+T-test
+Tails
+Temperature cools
+Temperature rises
+Testable
+The experiment
+The path
+Tissue
+Tonicity
+Transmembrane domain
+Transmembrane protein
+Transmission
+transport proteins help
+Transporter
+tubulin
+two halves
+two layers
+Two solutes
+Type
+Unanchored
+unequal sharing
+Uniport
+Unsaturated fatty acid
+Unsaturated fatty acids
+Until
+Urea
+v2 clean-notes design
+Valence electrons
+Vesicle
+Watch the last five
+weak in water
+Where
+Where the ATP went
+Who needs it
+widening
+α vs β glucose
+α-helix
+β-glucose
+β-pleated sheet
+− end
