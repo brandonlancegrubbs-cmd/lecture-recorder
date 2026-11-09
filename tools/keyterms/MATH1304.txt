@@ -1,5 +1,5 @@
 # Keyterms for MATH1304 (College Algebra, Dr. Zhanbo Yang): one per line, max 1000, each at most 5 words / 50 characters.
-# Rebuilt 2026-11-09 from the Ch 6 deck and the Ch 5 decks: real spoken math vocabulary only.
+# Rebuilt 2026-11-09 from the Ch 4 (4.1 Polynomials) deck and the Ch 5/6 decks: real spoken math vocabulary only.
 # The old list was bold words from study notes (colors, layout words) and pulled the transcript toward junk.
 Dr. Yang
 Zhanbo Yang
@@ -8,6 +8,64 @@ clicker question
 poll
 slide
 homework
+polynomial function
+polynomial functions and models
+polynomial equation
+classifying polynomials
+degree
+leading term
+leading coefficient
+leading-term test
+end behavior
+long term behavior
+constant function
+linear function
+quadratic function
+cubic function
+quartic function
+quintic
+real numbers
+non-negative integers
+upward
+downward
+same direction
+opposite direction
+n is even
+n is odd
+zeros
+zero of the function
+real zeros
+multiplicity
+multiplicity of 2
+multiplicity of 3
+even multiplicity
+odd multiplicity
+touch and go
+tangent
+goes across
+x-axis
+factored form
+turning points
+graphing polynomial functions
+intermediate value theorem
+polynomial division
+long division
+synthetic division
+remainder theorem
+factor theorem
+dividend
+divisor
+quotient
+remainder
+rational zeros theorem
+possible rational zeros
+Descartes' rule of signs
+complex zeros
+conjugate
+imaginary
+rational inequality
+polynomial inequality
+sign chart
 Pearson
 MyLab
 exercise
@@ -55,7 +113,6 @@ row-echelon form
 reduced row-echelon form
 Gaussian elimination
 Gauss-Jordan elimination
-leading coefficient
 leading one
 identity matrix
 square matrix
