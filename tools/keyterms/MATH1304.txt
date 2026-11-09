@@ -1,337 +1,220 @@
-# Keyterms for MATH1304: one per line, max 1000, each at most 5 words / 50 characters.
-# Starter list pulled from the bold terms in your study notes on 2026-11-08. Add or delete freely.
-`Domain of f`
-`Domain of g`
-`None`
-A magenta
-absent entirely
-algebra is correct
-All bullets grey
-ALL FIVE bullets GREY
-All four show 0%
-all in blue
-all three
-All three verified correct
-and wrote a
-answers left blank
-Any of the above
-any vertical line
-applied problems
-Approximate
-Arithmetic is correct
-astroid
-automatic 50%
-average
-Average rate of change
-Axis of Symmetry
-axis title
-becomes
-Biology
-black arrowhead
-Black curve
-black solid arrow
-BLANK #4, left empty
-blank white
-BLANKS, unanswered
-blue concave-up arc
-Blue curve
-Blue dashed horizontal line
-blue double-headed horizontal arrow
-blue horizontal line
-Blue horizontal segment
-Blue line
-Blue line A
-Blue line B
-blue line BELOW-RIGHT
-blue rectangular box
-Blue starburst dot
-blue vertical line
-blue, full width
-bold black
-bottom of a pit
-Calculator regression
-Carmel
-Carmel corn
-Chapter 1
-Chapter 2
-Chapter 6 past 6.1
-Circles
-clicker question
-coefficient of x
+# Keyterms for MATH1304 (College Algebra, Dr. Zhanbo Yang): one per line, max 1000, each at most 5 words / 50 characters.
+# Rebuilt 2026-11-09 from the Ch 4 (4.1 Polynomials) deck and the Ch 5/6 decks: real spoken math vocabulary only.
+# The old list was bold words from study notes (colors, layout words) and pulled the transcript toward junk.
+Dr. Yang
+Zhanbo Yang
 College Algebra
-colour-coded in three pieces
-combined
-Companion to
-Composition of Functions
-Composition of Functions --
-Consistent
-constant
+clicker question
+poll
+slide
+homework
+polynomial function
+polynomial functions and models
+polynomial equation
+classifying polynomials
+degree
+leading term
+leading coefficient
+leading-term test
+end behavior
+long term behavior
 constant function
-CONSTANT, exact form
-Convert to Slope-int form
-correct
-crimson double-headed arrow line
-curve fitting
-cyan highlight bar
-cyan vertical test lines
-dark steel-blue straight line
-dark-red
-dark-red square markers
-dark-red starburst dot
-Decomposition
-decreasing
-DECREASING, exact quantified form
-defining the variable
-deleted from scope
-Dependent
-Distance
-Distance subtracts, midpoint averages
-Distribute the minus
-domain and range
-domains of combined functions
-domestic
-Double negatives in substitution
-Draw
-dropped the minus sign
+linear function
+quadratic function
+cubic function
+quartic function
+quintic
+real numbers
+non-negative integers
+upward
+downward
+same direction
+opposite direction
+n is even
+n is odd
+zeros
+zero of the function
+real zeros
+multiplicity
+multiplicity of 2
+multiplicity of 3
+even multiplicity
+odd multiplicity
+touch and go
+tangent
+goes across
+x-axis
+factored form
+turning points
+graphing polynomial functions
+intermediate value theorem
+polynomial division
+long division
+synthetic division
+remainder theorem
+factor theorem
+dividend
+divisor
+quotient
+remainder
+rational zeros theorem
+possible rational zeros
+Descartes' rule of signs
+complex zeros
+conjugate
+imaginary
+rational inequality
+polynomial inequality
+sign chart
+Pearson
+MyLab
+exercise
+example
+system of equations
+system of linear equations
+linear equation
+two variables
+three variables
+ordered pair
+ordered triple
+solution set
+graphing method
+substitution
+substitution method
 elimination
 elimination method
-ending in a
-entirely grey
-equation
-equations
-evaluate
-Every line verified
-Every sign verified
-Everything else checks out
-everything grey
-Exact
-exact definitions
-Exact vs approximate
-Examples
-Exercise
-Exercises
-expression is defined
-faint grey italic `x`
-FIGURE
-for horizontal and
-formula
-formulars
-function
-general form
-gone entirely
-graph an equation
-graph does
-Graphically
-Graphing calculator required
-Graphs, Functions, and Models
-green check mark
-green circled check mark
-Green curve
-Green highlight
-Green oval
-Green ray
-Green starburst dot
-GREEN vertical dashed arrow
-GREYED OUT
-gross domestic product
-hand curve-fitting
-hand-drawn green rectangle
-handwritten by yourself
-Homework map
-Horizontal line
-Horizontal-line grid
-i.e. the line is
-identical correct equation
-identity function
-Identity-function grid
-Illustrations
-in a line
-in units
-included
-inclusive
-incomplete
-Inconsistent
-inconsistent and independent
-increasing
-INCREASING, exact quantified form
+consistent
+inconsistent
+dependent
 independent
-information sheet
-integer
-Intercepts written as POINTS
-inverses ✓
-inverted the fraction
-Is a function
-jump up
-KEPT
-left empty
-Left plot
-left unanswered
-Legend for Yang's annotations
-light blue
-light grey
-light periwinkle-blue straight line
-light-blue horizontal line
-Light-green label box
-linear function
-log base 10
-low-to-high
-Magenta line
-magenta square markers
-Marked correct
-mathematical model
-Middle plot
-Midpoint
-minimum of 5
-misses condition 1 entirely
-Mixture
-Mon 21 Sep
-More on Functions
-more than once
-Multiply using FOIL
-MyMathLab, accessed through Canvas
-national
-negative
-negative 2
-negative 6
-neither
-No error
-No error here
-No errors
-No handwriting
-no minus to distribute
-no slope
+infinitely many solutions
 no solution
-no solution is inconsistent
-no work shown
-no y-intercept
-None
-nonlinear
-nothing
-Nothing else
-Nothing is handwritten
-Number of pounds
-Nuts
-on the y-axis
-One cyan vertical line
-one unit per square
-open circle
-opposite
-opposite and reciprocal
-Option 1
-Option 2
-Option 4
-or parallel
-orange box
-outputs
-Pale cyan box
-Parabola
-Parallel
+one solution
+intersecting lines
 parallel lines
-parentheses around every negative
-perimeter
-perpendicular
-piecewise
-Point A
-Point B
-point-slope equation
-POLL EVERYWHERE #1
-POLL EVERYWHERE #2
-POLL EVERYWHERE #3
-Poll Everywhere icon
-practical sense
-Price per pound
-progressive and cumulative
-Quadrant IV
-reciprocal
-Red curve
-RED horizontal dashed arrow
-Red horizontal ray
-Red label box
-Red line
-Red ray
-relative maximum
-relative minimum
-relative minimum's
-represents
-Review
-Right plot
-right-angle square
-rise, −2
-scatter plots
-Scatterplot
-Section
-set of all inputs
-side by side
-Simplified
-slope-intercept
-small cyan-filled circles
-small thumbnail graph
-So the
-Solution
-squared
-standard form
-steel-blue straight line
-substitute
-substitution method
-Sysem of Linear Equaions
-system of linear equations
-Teal line
-Texas two steps
-The Algebra of Functions
-The class answered
-The Composition of Functions
-The difference quotient
-the quadratic formula
-the range of f
-Thick red arrow
-thick yellow-green arrow
-This is
-This is in scope
-This is wrong
-three black dots
-TI-89 is discouraged
-top of a bubble
-two black dots
-Two blue arrows
-two conjugate complex solutions
-Two cyan vertical lines
-Two separate machines
-U.S. Gross Domestic Product
-UDF
-undefined
-Unknow
-unlimited per question
-Value of Mixture
+coincident lines
+proportional
+coefficient
+coefficients
+constant
+constant term
 variable
-Verified correct
-Vertex
-vertical black segment
-Vertical line
+back-substitution
+matrix
+matrices
+augmented matrix
+coefficient matrix
+row
+column
+entry
+row operations
+row-equivalent
+row-echelon form
+reduced row-echelon form
+Gaussian elimination
+Gauss-Jordan elimination
+leading one
+identity matrix
+square matrix
+zero matrix
+dimensions
+scalar
+scalar multiplication
+matrix multiplication
+inverse matrix
+determinant
+cofactor
+minor
+Cramer's rule
+partial fractions
+partial fraction decomposition
+nonlinear system
+system of inequalities
+linear inequality
+half-plane
+boundary line
+dashed line
+solid line
+test point
+feasible region
+vertex
+vertices
+linear programming
+objective function
+constraint
+constraints
+maximize
+minimize
+mixture problem
+applied problem
+function
+inverse function
+one-to-one
+horizontal line test
 vertical line test
-Vertical-line grid
-vertically
-Wed, Dec 2
-Wed, Nov 4
-Wed, Sep 30
-Where points get lost
-with a
-with one addition
-with the unit
-wrong variable
+composition
+composite function
+exponential function
+logarithmic function
+logarithm
+natural logarithm
+common logarithm
+log base a
+ln
+base e
+the number e
+change of base
+change-of-base formula
+product rule
+quotient rule
+power rule
+exponent
+exponential equation
+logarithmic equation
+exponential growth
+exponential decay
+compound interest
+continuously compounded
+half-life
+doubling time
+horizontal asymptote
+vertical asymptote
+domain
+range
+interval notation
 x-intercept
-x-intercepts
 y-intercept
-y-intercept ≈
-y-value
-Year, x
-Yellow highlight
-yellow highlight box
-yellow highlighting
-Yellow ovals
-yellow-highlighted
-Yes
-zero denominator
-zero numerator
-−4 is included
-−4 is thrown out
-➡️ Sec 04
+slope
+slope-intercept form
+point-slope form
+standard form
+quadratic
+quadratic formula
+discriminant
+factor
+factoring
+polynomial
+rational function
+absolute value
+square root
+radical
+fraction
+numerator
+denominator
+reciprocal
+negative
+positive
+squared
+cubed
+to the power of
+divided by
+times
+equals
+plus or minus
+less than or equal to
+greater than or equal to
+f of x
+g of x
+f inverse
+x squared
+y equals
