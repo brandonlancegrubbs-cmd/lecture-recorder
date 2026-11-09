@@ -151,7 +151,7 @@ def words_from(result, offset):
     return out
 
 
-def build_markdown(meta, words, course):
+def build_markdown(meta, words, course, prof_only=False):
     # The speaker with the most words is the professor; everyone else is a student.
     counts = {}
     for w in words:
@@ -163,14 +163,15 @@ def build_markdown(meta, words, course):
              f"Date: {meta.get('date', '')} · Length {fmt(meta.get('durationSec', 0))} · {sum(counts.values()):,} words",
              f"Status: clean transcript from ElevenLabs {MODEL} with class keyterms, {datetime.now().strftime('%Y-%m-%d')}. "
              "Slides stay the source of wording.",
-             "Speakers: **Prof** = the main speaker · **Student** = anyone else. "
+             ("Speakers: Prof only (classmates' side talk left out of this copy). " if prof_only else
+              "Speakers: **Prof** = the main speaker · **Student** = anyone else. ") +
              "Marks: [★] Important · [‼ EXAM] · [? CONFUSED] · [✎ EXAMPLE] · [📅 ANNOUNCEMENT] · [Slide n]", ""]
     para, cur_spk, para_start, mi = [], None, 0.0, 0
 
     def flush():
         nonlocal para
         text = "".join(para).strip()
-        if text:
+        if text and not (prof_only and cur_spk != prof):
             who = "Prof" if cur_spk == prof else "Student"
             lines.append(f"**[{fmt(para_start)}] {who}:** {text}")
             lines.append("")
@@ -209,7 +210,30 @@ def main():
     ap.add_argument("--lecture", help="only lecture folders whose name contains this text")
     ap.add_argument("--yes", action="store_true", help="don't ask before spending")
     ap.add_argument("--dry-run", action="store_true", help="only list what would run")
+    ap.add_argument("--strip-vault", action="store_true", help="remove Student lines from vault copies already written, then stop")
     a = ap.parse_args()
+
+    if a.strip_vault:
+        n = 0
+        for f in sorted((a.vault / "raw" / "school").glob("*/lectures/*.clean.md")):
+            lines = f.read_text(encoding="utf-8").splitlines()
+            out, skip = [], False
+            for line in lines:
+                if line.startswith("**[") and "] Student:**" in line:
+                    skip = True
+                    continue
+                if skip and not line.strip():
+                    skip = False
+                    continue
+                skip = False
+                out.append(line.replace("Speakers: **Prof** = the main speaker · **Student** = anyone else. ",
+                                        "Speakers: Prof only (classmates' side talk left out of this copy). "))
+            if out != lines:
+                f.write_text("\n".join(out) + "\n", encoding="utf-8")
+                n += 1
+                print(f"  stripped {f.relative_to(a.vault)}")
+        print(f"Done: {n} vault file(s) cleaned. The full transcripts stay on the laptop in Fall2026.")
+        return
 
     if not a.root.is_dir():
         sys.exit(f"Can't find the Fall2026 folder at {a.root}. Run again with --root \"<path to Fall2026>\".")
@@ -269,7 +293,7 @@ def main():
                      f"duration_sec: {meta.get('durationSec', 0)}", f"words: {meta['cleanWords']}",
                      f'source: "Fall2026/{L["course"]}/lectures/{name}"', f"transcript: clean (ElevenLabs {MODEL} + keyterms)",
                      "---", ""]
-            (vdir / f"{name}.clean.md").write_text("\n".join(front) + md, encoding="utf-8")
+            (vdir / f"{name}.clean.md").write_text("\n".join(front) + build_markdown(meta, words, L["course"], prof_only=True), encoding="utf-8")
             print(f"  vault copy: raw/school/{vault_course(L['course'])}/lectures/{name}.clean.md")
         else:
             print(f"  (no vault folder at {a.vault}; skipped the vault copy)")
