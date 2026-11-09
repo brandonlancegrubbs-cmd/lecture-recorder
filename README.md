@@ -18,3 +18,14 @@ Each run pulls only what is new or changed since last time (state in `Fall2026\_
 - SPAN 1312, ENGL 1311: due dates, exams and announcements only.
 
 Output: `Fall2026\<class>\canvas\` on the laptop, and `raw\school\<COURSE>\decks\` plus `raw\school\<COURSE>\canvas\overview.md` in the vault. Options: `--list` (show what's new), `--course BIOL1402`, `--videos` (transcribe linked YouTube videos with the same ElevenLabs key).
+
+## Automatic after class (phase 4)
+
+The recorder now also lives on the study guides site: **https://study-guides-ten.vercel.app/lectures/** (Record tab picks the class from your schedule; Lectures tab shows each lecture). It saves the same files to `Fall2026` as this page.
+
+`tools/auto_lectures.py` does the after-class work with no clicks. Double-click `tools/Turn on auto lectures.bat` once; Windows then runs it every 10 minutes while you're logged in. Each pass:
+1. Transcribes finished lectures with ElevenLabs Scribe v2 (same as `transcribe_lectures.py`), only while this month's spend is under **$10** (Brandon 2026-11-09; change with `--cap`). Spend log: `Fall2026\_elevenlabs_spend.json`. Run log: `Fall2026\_auto_log.txt`.
+2. Matches the transcript to that day's slides. Decks come from the vault (`raw\school\<COURSE>\decks\*.md`), `Fall2026\<class>\decks\*.md` and `Fall2026\<class>\canvas\files\`. Your S taps help it find slide changes.
+3. Writes `insights` into `lecture.json` (slides covered, minutes per slide, "on the exam" moments, announcements, your marks by slide) and a lecture page to the vault at `school\sources\lectures\<COURSE>\<date title>.md`. `sync-vault.bat` pushes it.
+
+`py auto_lectures.py --dry-run` shows what it would do without spending. `--rebuild` redoes slide matching (for example after new decks arrive). `Turn off auto lectures.bat` stops it.
